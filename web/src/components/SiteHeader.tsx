@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import logo from '../assets/aurischess-logo.png'
+import logo from '../assets/aurischess-logo.svg'
 
 type SiteHeaderProps = {
   variant?: 'home' | 'auth'
@@ -30,7 +30,8 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
     return (
       <header className="top-bar auth-top-bar">
         <Link className="logo-link" to="/" aria-label="AurisChess home">
-          <img src={logo} alt="AurisChess" />
+          <img className="logo-graphic" src={logo} alt="" />
+          <span className="logo-text">Auris<span>Chess</span></span>
         </Link>
         <Link className="back-link" to="/">
           <ArrowLeft size={16} aria-hidden="true" />
@@ -45,7 +46,8 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
   return (
     <header className="top-bar">
       <a className="logo-link" href="#top" aria-label="AurisChess home">
-        <img src={logo} alt="AurisChess" />
+        <img className="logo-graphic" src={logo} alt="" />
+        <span className="logo-text">Auris<span>Chess</span></span>
       </a>
       <div className="top-actions">
         <nav className="main-nav" aria-label="Primary navigation">

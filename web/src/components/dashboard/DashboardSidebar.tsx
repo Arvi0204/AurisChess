@@ -1,5 +1,7 @@
 import {
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   Home,
   LogOut,
@@ -9,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import logo from '../../assets/aurischess-logo.png'
+import logo from '../../assets/aurischess-logo.svg'
 
 const navItems = [
   { icon: Home, label: 'Home', href: '/dashboard', active: true },
@@ -20,9 +22,15 @@ const navItems = [
 
 type DashboardSidebarProps = {
   username: string
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
-const DashboardSidebar = ({ username }: DashboardSidebarProps) => {
+const DashboardSidebar = ({
+  username,
+  isCollapsed = false,
+  onToggleCollapse,
+}: DashboardSidebarProps) => {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -54,9 +62,22 @@ const DashboardSidebar = ({ username }: DashboardSidebarProps) => {
 
       <aside className={`dashboard-sidebar${mobileOpen ? ' open' : ''}`}>
         <div className="sidebar-top">
-          <Link className="sidebar-logo" to="/dashboard" aria-label="AurisChess home">
-            <img src={logo} alt="AurisChess" />
-          </Link>
+          <div className="sidebar-brand-wrapper">
+            <Link className="sidebar-logo" to="/dashboard" aria-label="AurisChess home">
+              <img className="logo-graphic" src={logo} alt="" />
+              <span className="logo-text">Auris<span>Chess</span></span>
+            </Link>
+            {onToggleCollapse && (
+              <button
+                className="sidebar-collapse-btn"
+                onClick={onToggleCollapse}
+                type="button"
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
+            )}
+          </div>
 
           <nav className="sidebar-nav" aria-label="Dashboard navigation">
             {navItems.map(({ icon: Icon, label, href, active }) => (
@@ -65,6 +86,7 @@ const DashboardSidebar = ({ username }: DashboardSidebarProps) => {
                 to={href}
                 className={`sidebar-nav-item${active ? ' active' : ''}`}
                 onClick={() => setMobileOpen(false)}
+                title={isCollapsed ? label : undefined}
               >
                 <Icon size={20} aria-hidden="true" />
                 <span>{label}</span>
@@ -74,7 +96,7 @@ const DashboardSidebar = ({ username }: DashboardSidebarProps) => {
         </div>
 
         <div className="sidebar-bottom">
-          <div className="sidebar-profile">
+          <div className="sidebar-profile" title={isCollapsed ? username : undefined}>
             <div className="sidebar-avatar" aria-hidden="true">
               {initial}
             </div>
@@ -88,6 +110,7 @@ const DashboardSidebar = ({ username }: DashboardSidebarProps) => {
             className="sidebar-logout"
             onClick={handleLogout}
             type="button"
+            title={isCollapsed ? 'Log out' : undefined}
           >
             <LogOut size={18} aria-hidden="true" />
             <span>Log out</span>

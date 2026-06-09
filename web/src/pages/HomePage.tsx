@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import heroKnight from '../assets/aurischess-hero-knight.png'
-import logo from '../assets/aurischess-logo.png'
+import logo from '../assets/aurischess-logo.svg'
 import voiceBoard from '../assets/aurischess-voice-board.png'
 import performanceChart from '../assets/performance-chart.svg'
 import SiteHeader from '../components/SiteHeader'
@@ -207,7 +207,10 @@ const HomePage = () => {
       </section>
 
       <footer className="footer">
-        <img src={logo} alt="AurisChess" />
+        <Link className="logo-link" to="/" aria-label="AurisChess home">
+          <img className="logo-graphic" src={logo} alt="" />
+          <span className="logo-text">Auris<span>Chess</span></span>
+        </Link>
         <div>
           <a href="#features">Features</a>
           <a href="#learn">Demo</a>

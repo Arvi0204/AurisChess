@@ -1,7 +1,7 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import logo from '../assets/aurischess-logo.png'
+import logo from '../assets/aurischess-logo.svg'
 import googleLogo from '../assets/google-logo.svg'
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/auth`
@@ -89,7 +89,10 @@ const AuthPanel = () => {
   return (
     <div className="auth-panel" aria-labelledby="auth-title">
       <div className="auth-card-mark" aria-hidden="true">
-        <img src={logo} alt="" />
+        <Link className="logo-link" to="/" aria-label="AurisChess home">
+          <img className="logo-graphic" src={logo} alt="" />
+          <span className="logo-text">Auris<span>Chess</span></span>
+        </Link>
       </div>
 
       <div className="auth-tabs" role="tablist" aria-label="Authentication mode">

@@ -79,13 +79,40 @@ a {
 .logo-link {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  user-select: none;
 }
 
-.logo-link img,
-.footer img {
+.logo-graphic {
   display: block;
-  width: 118px;
-  height: auto;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(128, 207, 255, 0.25));
+  transition: transform 300ms ease;
+}
+
+.logo-link:hover .logo-graphic,
+.sidebar-logo:hover .logo-graphic {
+  transform: rotate(8deg) scale(1.05);
+}
+
+.logo-text {
+  font-weight: 800;
+  font-size: 1.48rem;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  display: inline-flex;
+}
+
+.logo-text span {
+  color: var(--cyan);
+  background: linear-gradient(135deg, #a8dfff 0%, #00b0f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .main-nav {
@@ -1449,12 +1476,7 @@ h1 span {
 
   .auth-card-mark {
     display: block;
-    margin-bottom: 20px;
-  }
-
-  .auth-card-mark img {
-    width: 108px;
-    height: auto;
+    margin-bottom: 24px;
   }
 }
 
@@ -1467,6 +1489,11 @@ h1 span {
   grid-template-columns: 260px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--page);
+  transition: grid-template-columns 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-shell.sidebar-collapsed {
+  grid-template-columns: 80px minmax(0, 1fr);
 }
 
 /* ── Sidebar ───────────────────────────────────────── */
@@ -1508,6 +1535,17 @@ h1 span {
   border-right: 1px solid #303539;
   background: #0f1417;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 260px;
+  transition: 
+    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 300ms ease;
+}
+
+.sidebar-collapsed .dashboard-sidebar {
+  width: 80px;
+  padding: 28px 12px 20px;
 }
 
 .sidebar-top {
@@ -1516,17 +1554,55 @@ h1 span {
   gap: 8px;
 }
 
+.sidebar-brand-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+  transition: padding 300ms ease, flex-direction 300ms ease;
+}
+
+.sidebar-collapsed .sidebar-brand-wrapper {
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 0 20px;
+  justify-content: center;
+}
+
 .sidebar-logo {
   display: flex;
   align-items: center;
-  padding: 0 12px 20px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--border-soft);
+  gap: 10px;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  user-select: none;
 }
 
-.sidebar-logo img {
-  width: 118px;
-  height: auto;
+.sidebar-logo .logo-graphic {
+  width: 32px;
+  height: 32px;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-soft);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.sidebar-collapse-btn:hover {
+  color: var(--cyan);
+  border-color: rgba(128, 207, 255, 0.3);
+  background: rgba(128, 207, 255, 0.08);
 }
 
 .sidebar-nav {
@@ -1646,6 +1722,88 @@ h1 span {
   color: #ffb4ab;
   background: rgba(255, 60, 40, 0.08);
   border-color: rgba(255, 100, 80, 0.2);
+}
+
+/* ── Collapsed Sidebar Modifiers ───────────────────── */
+
+.sidebar-collapsed .logo-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: 12px;
+}
+
+.sidebar-collapsed .sidebar-nav-item span {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-profile {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar-collapsed .sidebar-user-info {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-logout {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar-collapsed .sidebar-logout span {
+  display: none;
+}
+
+/* ── Hover-Expansion (for later pages) ──────────────── */
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar {
+  width: 80px;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover {
+  width: 260px;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
+  z-index: 1002;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .logo-text {
+  display: inline-flex;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-nav-item {
+  justify-content: flex-start;
+  padding: 12px 16px;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-nav-item span {
+  display: inline;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-profile {
+  justify-content: flex-start;
+  padding: 10px 12px;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-user-info {
+  display: flex;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-logout {
+  justify-content: flex-start;
+  padding: 10px 16px;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-logout span {
+  display: inline;
+}
+
+.sidebar-hover-expand.sidebar-collapsed .dashboard-sidebar:hover .sidebar-brand-wrapper {
+  flex-direction: row;
+  padding: 0 8px 20px;
+  justify-content: space-between;
 }
 
 /* ── Dashboard Main ────────────────────────────────── */
