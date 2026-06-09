@@ -1104,6 +1104,44 @@ h1 span {
   gap: 15px;
 }
 
+.auth-banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+  animation: bannerSlideIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-banner--error {
+  color: #ffb4ab;
+  border: 1px solid rgba(255, 100, 80, 0.25);
+  background: rgba(255, 60, 40, 0.1);
+}
+
+.auth-banner--success {
+  color: #a8e6a3;
+  border: 1px solid rgba(100, 220, 100, 0.25);
+  background: rgba(60, 200, 60, 0.1);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 .auth-form label {
   display: grid;
   gap: 8px;

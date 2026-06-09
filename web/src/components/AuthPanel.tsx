@@ -1,11 +1,87 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import logo from '../assets/aurischess-logo.png'
+
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/auth`
 
 const AuthPanel = () => {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [showPassword, setShowPassword] = useState(false)
   const isSignup = mode === 'signup'
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup redirect timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current)
+    }
+  }, [])
+
+  // Form state
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  // Feedback state
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const resetFeedback = () => {
+    setError(null)
+    setSuccess(null)
+  }
+
+  const handleModeSwitch = (newMode: 'login' | 'signup') => {
+    setMode(newMode)
+    resetFeedback()
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    resetFeedback()
+    setLoading(true)
+
+    const endpoint = isSignup ? '/signup' : '/login'
+    const body = isSignup
+      ? { username: name, email, password }
+      : { email, password }
+
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.message || 'Something went wrong.')
+        return
+      }
+
+      // Store the JWT token
+      localStorage.setItem('authToken', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
+
+      setSuccess(
+        isSignup
+          ? `Welcome, ${data.data.user.username}! Account created.`
+          : `Welcome back, ${data.data.user.username}!`
+      )
+
+      // Redirect to home after a short delay
+      redirectTimer.current = setTimeout(() => {
+        window.location.href = '/'
+      }, 1200)
+    } catch (err) {
+      console.error('Auth error:', err)
+      setError('Could not connect to the server. Is the backend running?')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="auth-panel" aria-labelledby="auth-title">
@@ -17,7 +93,7 @@ const AuthPanel = () => {
         <button
           type="button"
           className={!isSignup ? 'active' : undefined}
-          onClick={() => setMode('login')}
+          onClick={() => handleModeSwitch('login')}
           aria-selected={!isSignup}
         >
           Log in
@@ -25,7 +101,7 @@ const AuthPanel = () => {
         <button
           type="button"
           className={isSignup ? 'active' : undefined}
-          onClick={() => setMode('signup')}
+          onClick={() => handleModeSwitch('signup')}
           aria-selected={isSignup}
         >
           Sign up
@@ -51,13 +127,25 @@ const AuthPanel = () => {
         <span>or use email</span>
       </div>
 
-      <form className="auth-form" onSubmit={(event) => event.preventDefault()}>
+      {/* Error / Success banners */}
+      {error && <div className="auth-banner auth-banner--error">{error}</div>}
+      {success && <div className="auth-banner auth-banner--success">{success}</div>}
+
+      <form className="auth-form" onSubmit={handleSubmit}>
         {isSignup && (
           <label>
             <span>Name</span>
             <div className="input-shell">
               <User size={17} aria-hidden="true" />
-              <input type="text" name="name" autoComplete="name" placeholder="Auris Player" />
+              <input
+                type="text"
+                name="name"
+                autoComplete="name"
+                placeholder="Auris Player"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
           </label>
         )}
@@ -66,7 +154,15 @@ const AuthPanel = () => {
           <span>Email</span>
           <div className="input-shell">
             <Mail size={17} aria-hidden="true" />
-            <input type="email" name="email" autoComplete="email" placeholder="you@example.com" />
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
         </label>
 
@@ -79,6 +175,10 @@ const AuthPanel = () => {
               name="password"
               autoComplete={isSignup ? 'new-password' : 'current-password'}
               placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
             />
             <button
               type="button"
@@ -100,14 +200,18 @@ const AuthPanel = () => {
           </div>
         )}
 
-        <button className="primary-button auth-submit" type="submit">
-          {isSignup ? 'Create Account' : 'Log In'}
+        <button className="primary-button auth-submit" type="submit" disabled={loading}>
+          {loading
+            ? 'Please wait…'
+            : isSignup
+              ? 'Create Account'
+              : 'Log In'}
         </button>
       </form>
 
       <p className="auth-switch">
         {isSignup ? 'Already have an account?' : 'New to AurisChess?'}
-        <button type="button" onClick={() => setMode(isSignup ? 'login' : 'signup')}>
+        <button type="button" onClick={() => handleModeSwitch(isSignup ? 'login' : 'signup')}>
           {isSignup ? 'Log in' : 'Create one'}
         </button>
       </p>
