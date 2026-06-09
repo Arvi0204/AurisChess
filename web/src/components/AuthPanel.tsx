@@ -1,10 +1,12 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.png'
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/auth`
 
 const AuthPanel = () => {
+  const navigate = useNavigate()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [showPassword, setShowPassword] = useState(false)
   const isSignup = mode === 'signup'
@@ -73,7 +75,7 @@ const AuthPanel = () => {
 
       // Redirect to home after a short delay
       redirectTimer.current = setTimeout(() => {
-        window.location.href = '/'
+        navigate('/dashboard')
       }, 1200)
     } catch (err) {
       console.error('Auth error:', err)
@@ -196,7 +198,7 @@ const AuthPanel = () => {
               <input type="checkbox" name="remember" />
               Remember me
             </label>
-            <a href="/auth">Forgot password?</a>
+            <Link to="/auth">Forgot password?</Link>
           </div>
         )}
 

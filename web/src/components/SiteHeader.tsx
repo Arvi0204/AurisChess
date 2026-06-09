@@ -1,24 +1,46 @@
 import { ArrowLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.png'
 
 type SiteHeaderProps = {
   variant?: 'home' | 'auth'
 }
 
+function isLoggedIn(): boolean {
+  const token = localStorage.getItem('authToken')
+  const user = localStorage.getItem('user')
+  return Boolean(token && user)
+}
+
+function getUsername(): string {
+  try {
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      const user = JSON.parse(stored)
+      return user.username || 'Player'
+    }
+  } catch {
+    // fallback
+  }
+  return 'Player'
+}
+
 const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
   if (variant === 'auth') {
     return (
       <header className="top-bar auth-top-bar">
-        <a className="logo-link" href="/" aria-label="AurisChess home">
+        <Link className="logo-link" to="/" aria-label="AurisChess home">
           <img src={logo} alt="AurisChess" />
-        </a>
-        <a className="back-link" href="/">
+        </Link>
+        <Link className="back-link" to="/">
           <ArrowLeft size={16} aria-hidden="true" />
           Home
-        </a>
+        </Link>
       </header>
     )
   }
+
+  const loggedIn = isLoggedIn()
 
   return (
     <header className="top-bar">
@@ -33,9 +55,15 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
           <a href="#multiplayer">Multiplayer</a>
           <a href="#learn">Learn</a>
         </nav>
-        <a className="login-button" href="/auth">
-          Sign in
-        </a>
+        {loggedIn ? (
+          <Link className="login-button" to="/dashboard">
+            {getUsername()}'s Dashboard
+          </Link>
+        ) : (
+          <Link className="login-button" to="/auth">
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   )

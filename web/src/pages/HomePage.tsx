@@ -13,6 +13,7 @@ import {
   Volume2,
   Wifi,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import heroKnight from '../assets/aurischess-hero-knight.png'
 import logo from '../assets/aurischess-logo.png'
 import voiceBoard from '../assets/aurischess-voice-board.png'
@@ -111,10 +112,10 @@ const HomePage = () => {
               <Play size={14} aria-hidden="true" />
               Start Playing
             </a>
-            <a className="secondary-button" href="/auth">
+            <Link className="secondary-button" to="/auth">
               <User size={15} aria-hidden="true" />
               Create Account
-            </a>
+            </Link>
             <a className="secondary-button" href="#learn">
               <Brain size={15} aria-hidden="true" />
               Explore Training
