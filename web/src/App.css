@@ -1853,44 +1853,6 @@ h1 span {
   flex-shrink: 0;
 }
 
-.dashboard-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 220px;
-  padding: 0 14px;
-  height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background: rgba(11, 16, 18, 0.5);
-  transition: border-color 200ms ease, box-shadow 200ms ease;
-}
-
-.dashboard-search:focus-within {
-  border-color: rgba(128, 207, 255, 0.4);
-  box-shadow: 0 0 0 3px rgba(128, 207, 255, 0.12);
-}
-
-.dashboard-search svg {
-  color: var(--muted-low);
-  flex-shrink: 0;
-}
-
-.dashboard-search input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  color: var(--text);
-  background: transparent;
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
-.dashboard-search input::placeholder {
-  color: #707b83;
-}
 
 .dashboard-notif-btn {
   position: relative;
@@ -2097,44 +2059,86 @@ h1 span {
 .quick-stats {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .stat-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: clamp(16px, 2vw, 24px) 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
   background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  transition:
-    transform 200ms ease,
-    border-color 200ms ease;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  text-align: left;
+  transition: 
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.stat-item--cyan {
+  --stat-color: #80cfff;
+  --stat-color-rgb: 128, 207, 255;
+}
+
+.stat-item--indigo {
+  --stat-color: #818cf8;
+  --stat-color-rgb: 129, 140, 248;
+}
+
+.stat-item--orange {
+  --stat-color: #fb923c;
+  --stat-color-rgb: 251, 146, 60;
+}
+
+.stat-item--emerald {
+  --stat-color: #34d399;
+  --stat-color-rgb: 52, 211, 153;
+}
+
+.stat-item--amber {
+  --stat-color: #ffb95b;
+  --stat-color-rgb: 255, 185, 91;
 }
 
 .stat-item:hover {
-  transform: translateY(-2px);
-  border-color: rgba(128, 207, 255, 0.15);
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(var(--stat-color-rgb), 0.35);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.3),
+    0 0 18px rgba(var(--stat-color-rgb), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.stat-item svg {
-  color: var(--cyan);
+.stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(var(--stat-color-rgb), 0.06);
+  border: 1px solid rgba(var(--stat-color-rgb), 0.12);
+  color: var(--stat-color);
+  flex-shrink: 0;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stat-item--accent svg {
-  color: var(--amber);
+.stat-item:hover .stat-icon-wrapper {
+  background: rgba(var(--stat-color-rgb), 0.14);
+  border-color: rgba(var(--stat-color-rgb), 0.25);
+  transform: scale(1.06);
 }
 
-.stat-value {
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .stat-label {
@@ -2142,7 +2146,17 @@ h1 span {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.stat-value {
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 /* ── Recent Games ──────────────────────────────────── */
@@ -2285,14 +2299,6 @@ h1 span {
     padding: 20px 20px 20px 72px;
   }
 
-  .dashboard-header-actions {
-    width: 100%;
-  }
-
-  .dashboard-search {
-    flex: 1;
-    min-width: 0;
-  }
 
   .dashboard-content {
     padding: 20px;

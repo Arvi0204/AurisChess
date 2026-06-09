@@ -1,4 +1,4 @@
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 
 type DashboardHeaderProps = {
   username: string
@@ -17,15 +17,6 @@ const DashboardHeader = ({ username }: DashboardHeaderProps) => {
       </div>
 
       <div className="dashboard-header-actions">
-        <div className="dashboard-search" aria-label="Search">
-          <Search size={17} aria-hidden="true" />
-          <input
-            type="text"
-            placeholder="Search games, players..."
-            aria-label="Search games and players"
-          />
-        </div>
-
         <button
           className="dashboard-notif-btn"
           type="button"
