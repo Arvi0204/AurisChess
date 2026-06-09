@@ -2,6 +2,7 @@ import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.png'
+import googleLogo from '../assets/google-logo.svg'
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/auth`
 
@@ -120,9 +121,9 @@ const AuthPanel = () => {
         </p>
       </div>
 
-      <button className="google-button" type="button">
-        <span aria-hidden="true">G</span>
-        Continue with Google
+      <button className="google-button" type="button" disabled title="Google Sign-In is coming soon">
+        <img src={googleLogo} alt="" aria-hidden="true" />
+        Continue with Google (Coming Soon)
       </button>
 
       <div className="auth-divider">

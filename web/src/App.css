@@ -1062,22 +1062,21 @@ h1 span {
     transform 200ms ease;
 }
 
-.google-button:hover {
+.google-button:hover:not(:disabled) {
   border-color: rgba(128, 207, 255, 0.3);
   background-color: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
 }
 
-.google-button span {
-  display: grid;
+.google-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.google-button img {
   width: 20px;
   height: 20px;
-  place-items: center;
-  border-radius: 4px;
-  color: #ffffff;
-  background: #1a73e8;
-  font-size: 0.8rem;
-  font-weight: 900;
+  object-fit: contain;
 }
 
 .auth-divider {
