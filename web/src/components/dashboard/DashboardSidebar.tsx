@@ -10,13 +10,13 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import logo from '../../assets/aurischess-logo.svg'
 import { supabase } from '../../config/supabaseClient'
 
 const navItems = [
-  { icon: Home, label: 'Home', href: '/dashboard', active: true },
-  { icon: Swords, label: 'Play', href: '#play' },
+  { icon: Home, label: 'Home', href: '/dashboard' },
+  { icon: Swords, label: 'Play', href: '/play' },
   { icon: BookOpen, label: 'Learn', href: '#learn' },
   { icon: Crown, label: 'Leaderboard', href: '#leaderboard' },
 ]
@@ -33,6 +33,7 @@ const DashboardSidebar = ({
   onToggleCollapse,
 }: DashboardSidebarProps) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -83,18 +84,21 @@ const DashboardSidebar = ({
           </div>
 
           <nav className="sidebar-nav" aria-label="Dashboard navigation">
-            {navItems.map(({ icon: Icon, label, href, active }) => (
-              <Link
-                key={label}
-                to={href}
-                className={`sidebar-nav-item${active ? ' active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-                title={isCollapsed ? label : undefined}
-              >
-                <Icon size={20} aria-hidden="true" />
-                <span>{label}</span>
-              </Link>
-            ))}
+            {navItems.map(({ icon: Icon, label, href }) => {
+              const isActive = href.startsWith('/') && location.pathname === href
+              return (
+                <Link
+                  key={label}
+                  to={href}
+                  className={`sidebar-nav-item${isActive ? ' active' : ''}`}
+                  onClick={() => setMobileOpen(false)}
+                  title={isCollapsed ? label : undefined}
+                >
+                  <Icon size={20} aria-hidden="true" />
+                  <span>{label}</span>
+                </Link>
+              )
+            })}
           </nav>
         </div>
 

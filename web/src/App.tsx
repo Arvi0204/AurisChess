@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
+import PlayPage from './pages/PlayPage'
 import { supabase } from './config/supabaseClient'
 
 function isLoggedIn(): boolean {
@@ -76,6 +77,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/play"
+          element={
+            <ProtectedRoute>
+              <PlayPage />
             </ProtectedRoute>
           }
         />
