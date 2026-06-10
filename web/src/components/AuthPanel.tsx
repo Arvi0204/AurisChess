@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.svg'
 import googleLogo from '../assets/google-logo.svg'
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api/auth`
+import { supabase } from '../config/supabaseClient'
 
 const AuthPanel = () => {
   const navigate = useNavigate()
@@ -40,47 +39,78 @@ const AuthPanel = () => {
     resetFeedback()
   }
 
+  const handleGoogleLogin = async () => {
+    resetFeedback()
+    setLoading(true)
+    try {
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+      if (err) {
+        setError(err.message)
+      }
+    } catch (err) {
+      console.error('Google login error:', err)
+      setError('Could not connect to Google auth.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     resetFeedback()
     setLoading(true)
 
-    const endpoint = isSignup ? '/signup' : '/login'
-    const body = isSignup
-      ? { username: name, email, password }
-      : { email, password }
-
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
+      if (isSignup) {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: name
+            }
+          }
+        })
 
-      const data = await res.json()
+        if (signUpError) {
+          setError(signUpError.message)
+          return
+        }
 
-      if (!res.ok) {
-        setError(data.message || 'Something went wrong.')
-        return
+        // Standard Supabase behavior: If email confirmation is enabled, session won't be active immediately
+        if (data.user && !data.session) {
+          setSuccess('Signup successful! Please check your email for confirmation.')
+          return
+        }
+
+        setSuccess(`Welcome, ${name}! Account created.`)
+      } else {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+
+        if (signInError) {
+          setError(signInError.message)
+          return
+        }
+
+        const username = data.user?.user_metadata?.username || data.user?.email?.split('@')[0] || 'Player'
+        setSuccess(`Welcome back, ${username}!`)
       }
 
-      // Store the JWT token
-      localStorage.setItem('authToken', data.data.token)
-      localStorage.setItem('user', JSON.stringify(data.data.user))
-
-      setSuccess(
-        isSignup
-          ? `Welcome, ${data.data.user.username}! Account created.`
-          : `Welcome back, ${data.data.user.username}!`
-      )
-
-      // Redirect to home after a short delay
+      // Redirect to home after a short delay (onAuthStateChange in App.tsx handles the localStorage sync)
       redirectTimer.current = setTimeout(() => {
         navigate('/dashboard')
       }, 1200)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Auth error:', err)
-      setError('Could not connect to the server. Is the backend running?')
+      setError(err.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
@@ -124,9 +154,9 @@ const AuthPanel = () => {
         </p>
       </div>
 
-      <button className="google-button" type="button" disabled title="Google Sign-In is coming soon">
+      <button className="google-button" type="button" onClick={handleGoogleLogin} disabled={loading}>
         <img src={googleLogo} alt="" aria-hidden="true" />
-        Continue with Google (Coming Soon)
+        Continue with Google
       </button>
 
       <div className="auth-divider">
@@ -226,3 +256,4 @@ const AuthPanel = () => {
 }
 
 export default AuthPanel
+

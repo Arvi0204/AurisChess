@@ -12,6 +12,7 @@ import {
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../assets/aurischess-logo.svg'
+import { supabase } from '../../config/supabaseClient'
 
 const navItems = [
   { icon: Home, label: 'Home', href: '/dashboard', active: true },
@@ -34,11 +35,13 @@ const DashboardSidebar = ({
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     localStorage.removeItem('authToken')
     localStorage.removeItem('user')
     navigate('/')
   }
+
 
   const initial = username.charAt(0).toUpperCase()
 
