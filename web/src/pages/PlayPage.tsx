@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -70,6 +70,14 @@ const PlayPage = () => {
 
   // Ref for chess game instance to prevent stale closure issues
   const gameRef = useRef(new Chess())
+  const moveHistoryRef = useRef<HTMLDivElement>(null)
+
+  // Autoscroll move history to bottom when new moves are added
+  useEffect(() => {
+    if (moveHistoryRef.current) {
+      moveHistoryRef.current.scrollTop = moveHistoryRef.current.scrollHeight
+    }
+  }, [gameFen])
 
   let username = 'Player'
   try {
@@ -524,7 +532,7 @@ const PlayPage = () => {
             <aside className="controls-section">
 
               {/* Move History list */}
-              <div className="move-history-container">
+              <div className="move-history-container" ref={moveHistoryRef}>
                 <span className="move-history-title">Move History</span>
                 <div className="move-history-list">
                   {(() => {
@@ -586,48 +594,60 @@ const PlayPage = () => {
 
               {/* Game Control Action Buttons */}
               <div className="game-controls-footer">
-                
-                {/* Resign Confirm Overlay */}
                 {showResignConfirm && (
-                  <div className="resign-overlay" role="dialog" aria-label="Confirm Resignation">
-                    <span className="resign-overlay-text">Are you sure you want to resign the game?</span>
-                    <div className="resign-overlay-actions">
-                      <button className="game-control-btn resign-confirm-btn" onClick={handleResign}>
+                  <div className="resign-overlay-backdrop" onClick={() => setShowResignConfirm(false)} />
+                )}
+
+                {!showResignConfirm ? (
+                  <div className="game-buttons-layout animate-fade-in">
+                    <div className="control-btn-grid">
+                      <button 
+                        className="game-control-btn resign-btn" 
+                        onClick={() => setShowResignConfirm(true)}
+                        disabled={!!gameResult}
+                      >
+                        <Flag size={14} />
+                        Resign
+                      </button>
+                      <button 
+                        className="game-control-btn takeback-btn" 
+                        onClick={undoLastTurn}
+                        disabled={gameRef.current.history().length < 2}
+                      >
+                        <RotateCcw size={14} />
+                        Take back
+                      </button>
+                    </div>
+
+                    <button 
+                      className={`game-control-btn blindfold-btn ${blindfoldMode ? 'active' : ''}`}
+                      onClick={() => setBlindfoldMode(!blindfoldMode)}
+                    >
+                      {blindfoldMode ? <Eye size={14} /> : <EyeOff size={14} />}
+                      {blindfoldMode ? 'Show Pieces' : 'Blindfold Mode'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="resign-confirm-block animate-fade-in">
+                    <span className="resign-prompt-text">Are you sure you want to resign?</span>
+                    <div className="resign-confirm-grid">
+                      <button 
+                        className="game-control-btn resign-yes-btn" 
+                        onClick={handleResign}
+                      >
+                        <Flag size={14} />
                         Yes, Resign
                       </button>
-                      <button className="game-control-btn" onClick={() => setShowResignConfirm(false)}>
-                        Cancel
+                      <button 
+                        className="game-control-btn resign-no-btn" 
+                        onClick={() => setShowResignConfirm(false)}
+                      >
+                        <Play size={14} />
+                        No, Keep Playing
                       </button>
                     </div>
                   </div>
                 )}
-
-                <div className="control-btn-grid">
-                  <button 
-                    className="game-control-btn resign-btn" 
-                    onClick={() => setShowResignConfirm(true)}
-                    disabled={!!gameResult}
-                  >
-                    <Flag size={14} />
-                    Resign
-                  </button>
-                  <button 
-                    className="game-control-btn takeback-btn" 
-                    onClick={undoLastTurn}
-                    disabled={gameRef.current.history().length < 2}
-                  >
-                    <RotateCcw size={14} />
-                    Take back
-                  </button>
-                </div>
-
-                <button 
-                  className={`game-control-btn blindfold-btn ${blindfoldMode ? 'active' : ''}`}
-                  onClick={() => setBlindfoldMode(!blindfoldMode)}
-                >
-                  {blindfoldMode ? <Eye size={14} /> : <EyeOff size={14} />}
-                  {blindfoldMode ? 'Show Pieces' : 'Blindfold Mode'}
-                </button>
               </div>
             </aside>
 
@@ -854,7 +874,6 @@ const PlayPage = () => {
             <button 
               type="button" 
               className="play-overlay-cancel-btn"
-              style={{ marginTop: '20px' }}
               onClick={() => setIsSearching(false)}
             >
               <X size={16} aria-hidden="true" />
