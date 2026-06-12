@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -50,6 +50,8 @@ const PlayPage = () => {
   const [gameMode, setGameMode] = useState<'computer' | 'online' | null>(null)
   const stockfishRef = useRef<Worker | null>(null)
   const [gameFen, setGameFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+  const [fenHistory, setFenHistory] = useState<string[]>(['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'])
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(0)
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white')
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [manualPremove, setManualPremove] = useState<{ from: string; to: string } | null>(null)
@@ -78,7 +80,48 @@ const PlayPage = () => {
     if (moveHistoryRef.current) {
       moveHistoryRef.current.scrollTop = moveHistoryRef.current.scrollHeight
     }
-  }, [gameFen])
+  }, [fenHistory.length])
+
+  // Keyboard navigation for game history
+  useEffect(() => {
+    if (!gameStarted) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when focusing inputs or textareas
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '')) {
+        return
+      }
+
+      const historyLength = gameRef.current.history().length
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setCurrentMoveIndex((prev) => {
+          const nextIndex = Math.max(0, prev - 1)
+          setGameFen(fenHistory[nextIndex])
+          return nextIndex
+        })
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setCurrentMoveIndex((prev) => {
+          const nextIndex = Math.min(historyLength, prev + 1)
+          setGameFen(fenHistory[nextIndex])
+          return nextIndex
+        })
+      } else if (e.key === 'ArrowUp' || e.key === 'Home') {
+        e.preventDefault()
+        setCurrentMoveIndex(0)
+        setGameFen(fenHistory[0])
+      } else if (e.key === 'ArrowDown' || e.key === 'End') {
+        e.preventDefault()
+        setCurrentMoveIndex(historyLength)
+        setGameFen(fenHistory[historyLength])
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [gameStarted, fenHistory])
 
   let username = 'Player'
   try {
@@ -119,7 +162,10 @@ const PlayPage = () => {
               
               // Initialize active game state
               gameRef.current = new Chess()
-              setGameFen(gameRef.current.fen())
+              const initialFen = gameRef.current.fen()
+              setGameFen(initialFen)
+              setFenHistory([initialFen])
+              setCurrentMoveIndex(0)
               
               const tcOptions = {
                 'rapid-10-0': 600,
@@ -197,7 +243,7 @@ const PlayPage = () => {
 
       const move = gameRef.current.move({ from, to, promotion })
       if (move) {
-        setGameFen(gameRef.current.fen())
+        updateGameStateAfterMove()
         checkGameStatus()
 
         // After computer moves, execute queued manual premove if valid
@@ -208,12 +254,12 @@ const PlayPage = () => {
               to: manualPremove.to,
               promotion: 'q'
             })
+            updateGameStateAfterMove()
           } catch (e) {
             // Illegal premove, discard silently
           }
           setManualPremove(null)
         }
-        setGameFen(gameRef.current.fen())
         checkGameStatus()
       }
     } catch (e) {
@@ -286,14 +332,28 @@ const PlayPage = () => {
       }, 1000)
     }
     return () => clearInterval(clockInterval)
-  }, [gameStarted, gameResult, playerColor, gameFen, gameMode])
+  }, [gameStarted, gameResult, playerColor, fenHistory.length, gameMode])
+
+  const updateGameStateAfterMove = () => {
+    const nextFen = gameRef.current.fen()
+    setFenHistory(prev => [...prev, nextFen])
+    setCurrentMoveIndex(prev => {
+      const historyLength = gameRef.current.history().length
+      const isAtEnd = prev === historyLength - 1
+      if (isAtEnd) {
+        setGameFen(nextFen)
+        return historyLength
+      }
+      return prev
+    })
+  }
 
   // Local chess mechanics and move handlers
   const makeMove = (moveObj: any) => {
     try {
       const move = gameRef.current.move(moveObj)
       if (move) {
-        setGameFen(gameRef.current.fen())
+        updateGameStateAfterMove()
         setSelectedSquare(null)
         setManualPremove(null)
         checkGameStatus()
@@ -327,6 +387,9 @@ const PlayPage = () => {
   const onDrop = ({ piece, sourceSquare, targetSquare }: { piece: any; sourceSquare: string; targetSquare: string | null }) => {
     if (gameResult || !targetSquare) return false
 
+    const isAtLatest = currentMoveIndex === gameRef.current.history().length
+    if (!isAtLatest) return false
+
     const turn = gameRef.current.turn()
     const playerIsWhite = playerColor === 'white'
     const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
@@ -351,6 +414,9 @@ const PlayPage = () => {
 
   const onSquareClick = ({ square }: { piece?: any; square: string }) => {
     if (gameResult) return
+
+    const isAtLatest = currentMoveIndex === gameRef.current.history().length
+    if (!isAtLatest) return
 
     const turn = gameRef.current.turn()
     const playerIsWhite = playerColor === 'white'
@@ -410,7 +476,10 @@ const PlayPage = () => {
     if (gameRef.current.history().length >= 2) {
       gameRef.current.undo() // undo computer move
       gameRef.current.undo() // undo player move
-      setGameFen(gameRef.current.fen())
+      const nextFen = gameRef.current.fen()
+      setGameFen(nextFen)
+      setFenHistory(prev => prev.slice(0, -2))
+      setCurrentMoveIndex(gameRef.current.history().length)
       setSelectedSquare(null)
       setManualPremove(null)
       setGameResult(null) // Clear result if undoing
@@ -434,6 +503,12 @@ const PlayPage = () => {
       stockfishRef.current.terminate()
       stockfishRef.current = null
     }
+    // Reset FEN history
+    gameRef.current = new Chess()
+    const initialFen = gameRef.current.fen()
+    setGameFen(initialFen)
+    setFenHistory([initialFen])
+    setCurrentMoveIndex(0)
   }
 
   const toggleVoiceControl = () => {
@@ -462,7 +537,7 @@ const PlayPage = () => {
       }, 500) // Small delay before engine search begins
       return () => clearTimeout(timer)
     }
-  }, [gameFen, gameStarted, gameResult, playerColor, gameMode])
+  }, [fenHistory.length, gameStarted, gameResult, playerColor, gameMode])
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60)
@@ -549,7 +624,7 @@ const PlayPage = () => {
                     options={{
                       position: gameFen,
                       boardOrientation: playerColor,
-                      allowDragging: !gameResult,
+                      allowDragging: !gameResult && (currentMoveIndex === gameRef.current.history().length),
                       onPieceDrop: onDrop,
                       onSquareClick: onSquareClick,
                       boardStyle: {
@@ -631,13 +706,86 @@ const PlayPage = () => {
                     return pairs.map((pair) => (
                       <div key={pair.num} className="move-row">
                         <span className="move-number">{pair.num}.</span>
-                        <span className="move-val">{pair.w}</span>
-                        <span className="move-val">{pair.b}</span>
+                        <span 
+                          className={`move-val${currentMoveIndex === (pair.num * 2 - 1) ? ' move-val--active' : ''}`}
+                          onClick={() => {
+                            setCurrentMoveIndex(pair.num * 2 - 1)
+                            setGameFen(fenHistory[pair.num * 2 - 1])
+                          }}
+                        >
+                          {pair.w}
+                        </span>
+                        {pair.b ? (
+                          <span 
+                            className={`move-val${currentMoveIndex === (pair.num * 2) ? ' move-val--active' : ''}`}
+                            onClick={() => {
+                              setCurrentMoveIndex(pair.num * 2)
+                              setGameFen(fenHistory[pair.num * 2])
+                            }}
+                          >
+                            {pair.b}
+                          </span>
+                        ) : (
+                          <span className="move-val move-val--empty" />
+                        )}
                       </div>
                     ))
                   })()}
                 </div>
               </div>
+
+              {/* Move History Navigation Controls */}
+              {gameRef.current.history().length > 0 && (
+                <div className="history-navigation-bar">
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => {
+                      setCurrentMoveIndex(0)
+                      setGameFen(fenHistory[0])
+                    }}
+                    disabled={currentMoveIndex === 0}
+                    title="First Move"
+                  >
+                    <ChevronsLeft size={20} />
+                  </button>
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => {
+                      const nextIndex = Math.max(0, currentMoveIndex - 1)
+                      setCurrentMoveIndex(nextIndex)
+                      setGameFen(fenHistory[nextIndex])
+                    }}
+                    disabled={currentMoveIndex === 0}
+                    title="Previous Move"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => {
+                      const nextIndex = Math.min(gameRef.current.history().length, currentMoveIndex + 1)
+                      setCurrentMoveIndex(nextIndex)
+                      setGameFen(fenHistory[nextIndex])
+                    }}
+                    disabled={currentMoveIndex === gameRef.current.history().length}
+                    title="Next Move"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => {
+                      const nextIndex = gameRef.current.history().length
+                      setCurrentMoveIndex(nextIndex)
+                      setGameFen(fenHistory[nextIndex])
+                    }}
+                    disabled={currentMoveIndex === gameRef.current.history().length}
+                    title="Last Move"
+                  >
+                    <ChevronsRight size={20} />
+                  </button>
+                </div>
+              )}
 
               {/* Voice Control Panel */}
               <div className="voice-panel-card">
