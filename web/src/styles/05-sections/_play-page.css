@@ -1,0 +1,190 @@
+/* Play Shell Wrapper */
+.play-shell {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.play-shell .dashboard-main {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.play-page-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(28px, 4vw, 44px);
+  padding: clamp(32px, 5vw, 56px) clamp(24px, 4vw, 48px);
+  flex: 1;
+  min-height: 0;
+}
+
+.play-page-heading {
+  text-align: center;
+  max-width: 540px;
+}
+
+.play-page-heading h2 {
+  margin: 0 0 10px;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.play-page-heading p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+/* Play Mode Containers */
+.play-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(20px, 3vw, 28px);
+  width: 100%;
+  max-width: 920px;
+}
+
+.engine-levels {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.time-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.time-control-options {
+  display: flex;
+  gap: 10px;
+}
+
+/* Interactive Matchmaking Overlays */
+.play-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(7, 9, 11, 0.85);
+  backdrop-filter: blur(12px);
+  animation: fade--in 300ms ease forwards;
+}
+
+.play-overlay-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px 32px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #13191c 0%, #0c0f12 100%);
+  box-shadow: 
+    0 30px 70px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: scale--up 350ms var(--transition-bezier) forwards;
+}
+
+.play-overlay-card--amber { border: 1px solid rgba(255, 185, 91, 0.2); }
+.play-overlay-card--cyan { border: 1px solid rgba(128, 207, 255, 0.2); }
+
+/* Radar Pulse Matchmaking Animation */
+.play-overlay-visual {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-overlay-icon-wrapper {
+  position: relative;
+  z-index: var(--z-index-above);
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.play-overlay-card--amber .play-overlay-icon-wrapper {
+  color: var(--color-amber);
+  background: rgba(255, 185, 91, 0.05);
+  border-color: rgba(255, 185, 91, 0.2);
+}
+
+.play-overlay-card--cyan .play-overlay-icon-wrapper {
+  color: var(--color-cyan);
+  background: rgba(128, 207, 255, 0.05);
+  border-color: rgba(128, 207, 255, 0.2);
+}
+
+.play-overlay-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  pointer-events: none;
+  --transform-prefix: translate(-50%, -50%);
+  --pulse-start-scale: 1;
+  --pulse-end-scale: 2.1875;
+}
+
+.play-overlay-card--amber .play-overlay-pulse {
+  border: 2px solid rgba(255, 185, 91, 0.3);
+  animation: pulse--out 2s var(--transition-bezier) infinite;
+}
+
+.play-overlay-card--cyan .play-overlay-pulse {
+  border: 2px solid rgba(128, 207, 255, 0.3);
+  animation: pulse--out 2s var(--transition-bezier) infinite;
+}
+
+.play-overlay-pulse-2 {
+  animation-delay: 0.8s !important;
+}
+
+.play-overlay-card h4 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.play-overlay-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.play-overlay-timer {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 16px 0 24px;
+  letter-spacing: -0.02em;
+}

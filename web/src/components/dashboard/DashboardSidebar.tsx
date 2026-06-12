@@ -68,8 +68,8 @@ const DashboardSidebar = ({
         <div className="sidebar-top">
           <div className="sidebar-brand-wrapper">
             <Link className="sidebar-logo" to="/dashboard" aria-label="AurisChess home">
-              <img className="logo-graphic" src={logo} alt="" />
-              <span className="logo-text">Auris<span>Chess</span></span>
+              <img className="logo__graphic" src={logo} alt="" />
+              <span className="logo__text">Auris<span>Chess</span></span>
             </Link>
             {onToggleCollapse && (
               <button
@@ -90,7 +90,7 @@ const DashboardSidebar = ({
                 <Link
                   key={label}
                   to={href}
-                  className={`sidebar-nav-item${isActive ? ' active' : ''}`}
+                  className={`sidebar-nav-item${isActive ? ' sidebar-nav-item--active' : ''}`}
                   onClick={() => setMobileOpen(false)}
                   title={isCollapsed ? label : undefined}
                 >

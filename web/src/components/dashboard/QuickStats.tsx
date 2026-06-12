@@ -13,12 +13,12 @@ const QuickStats = () => {
     <section className="quick-stats" aria-label="Player statistics">
       {stats.map(({ icon: Icon, label, value, type }) => (
         <div className={`stat-item stat-item--${type}`} key={label}>
-          <div className="stat-icon-wrapper">
+          <div className="stat-item__icon-wrapper">
             <Icon size={18} aria-hidden="true" />
           </div>
-          <div className="stat-info">
-            <span className="stat-label">{label}</span>
-            <span className="stat-value">{value}</span>
+          <div className="stat-item__info">
+            <span className="stat-item__label">{label}</span>
+            <span className="stat-item__value">{value}</span>
           </div>
         </div>
       ))}

@@ -27,24 +27,24 @@ const PlayCard = () => {
     <section className="play-cards" aria-label="Play modes">
       {cards.map(({ id, icon: Icon, title, description, badge, accentClass, href }) => (
         <Link to={href} className={`play-card ${accentClass}`} key={id} id={id}>
-          <div className="play-card-icon">
+          <div className="play-card__icon">
             <Icon size={28} aria-hidden="true" />
           </div>
 
-          <div className="play-card-body">
+          <div className="play-card__body">
             <h3>{title}</h3>
             <p>{description}</p>
 
-            <div className="play-card-footer">
-              <span className="play-card-badge">{badge}</span>
-              <span className="play-card-voice">
+            <div className="play-card__footer">
+              <span className="play-card__badge">{badge}</span>
+              <span className="play-card__voice">
                 <Mic size={13} aria-hidden="true" />
                 Voice Enabled
               </span>
             </div>
           </div>
 
-          <div className="play-card-glow" aria-hidden="true" />
+          <div className="play-card__glow" aria-hidden="true" />
         </Link>
       ))}
     </section>

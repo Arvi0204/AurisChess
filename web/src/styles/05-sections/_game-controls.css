@@ -1,0 +1,217 @@
+/* Control Panel Right Column */
+.controls-section {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card-solid);
+  border-left: 1px solid #303539;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.move-history-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.move-history-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-low);
+  margin-bottom: 4px;
+}
+
+.move-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #f0f3f5;
+}
+
+.move-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.move-number {
+  color: var(--color-muted-low);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.move-val {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.move-val:hover {
+  background: var(--color-card-soft);
+  color: var(--color-cyan);
+}
+
+/* Voice Control Card */
+.voice-panel-card {
+  background: rgba(23, 29, 33, 0.5);
+  border-top: 1px solid rgba(128, 207, 255, 0.15);
+  border-bottom: 1px solid rgba(128, 207, 255, 0.15);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.voice-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.voice-mic-container {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.mic-ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(128, 207, 255, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.voice-mic-btn--active + .mic-ripple {
+  --pulse-start-scale: 1;
+  --pulse-end-scale: 1.8;
+  animation: pulse--out 1.6s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+
+.voice-waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+}
+
+.voice-wave-bar {
+  width: 3px;
+  height: 100%;
+  background-color: var(--color-cyan);
+  border-radius: 2px;
+  transform: scaleY(0.15);
+  transform-origin: bottom;
+  transition: transform 0.2s ease;
+}
+
+.voice-waveform--active .voice-wave-bar:nth-child(1) { --dance-start: 0.15; --dance-end: 0.8; animation: voice-dance--anim 0.8s ease-in-out infinite alternate; }
+.voice-waveform--active .voice-wave-bar:nth-child(2) { --dance-start: 0.2; --dance-end: 1.0; animation: voice-dance--anim 0.9s ease-in-out infinite alternate; }
+.voice-waveform--active .voice-wave-bar:nth-child(3) { --dance-start: 0.15; --dance-end: 0.6; animation: voice-dance--anim 0.7s ease-in-out infinite alternate; }
+.voice-waveform--active .voice-wave-bar:nth-child(4) { --dance-start: 0.3; --dance-end: 0.9; animation: voice-dance--anim 1.1s ease-in-out infinite alternate; }
+.voice-waveform--active .voice-wave-bar:nth-child(5) { --dance-start: 0.2; --dance-end: 1.0; animation: voice-dance--anim 0.75s ease-in-out infinite alternate; }
+.voice-waveform--active .voice-wave-bar:nth-child(6) { --dance-start: 0.15; --dance-end: 0.8; animation: voice-dance--anim 1.05s ease-in-out infinite alternate; }
+
+.voice-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.voice-title {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-cyan);
+}
+
+.voice-status {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.3;
+}
+
+/* Active Game Footer overlays */
+.game-controls-footer {
+  padding: 20px;
+  border-top: 1px solid #303539;
+  background: var(--color-page);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.control-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.resign-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: transparent;
+}
+
+.game-buttons-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 92px;
+}
+
+.resign-confirm-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 92px;
+  position: relative;
+  z-index: 10;
+}
+
+.resign-prompt-text {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f0f3f5;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.resign-confirm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}

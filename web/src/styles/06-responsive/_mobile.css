@@ -1,0 +1,155 @@
+@media (max-width: 720px) {
+  /* Header & Navigation Overrides */
+  .top-bar {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px clamp(16px, 5vw, 24px);
+  }
+
+  .top-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .main-nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .login-button,
+  .back-link {
+    width: 100%;
+  }
+
+  /* Hero & Landing Overrides */
+  .hero-section {
+    padding-top: 64px;
+    padding-bottom: 56px;
+  }
+
+  .hero-actions,
+  .voice-card {
+    flex-direction: column;
+  }
+
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
+
+  .hero-media {
+    max-width: none;
+    aspect-ratio: 1 / 0.86;
+  }
+
+  .feature-card {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .voice-board-visual {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .benefits-list {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-steps article {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  /* Auth View Overrides */
+  .auth-page {
+    padding: 24px clamp(16px, 5vw, 24px) 40px;
+  }
+
+  .auth-story {
+    text-align: left;
+  }
+
+  .auth-story h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .auth-story p:not(.status-pill) {
+    margin-left: 0;
+  }
+
+  .auth-panel {
+    padding: 20px;
+  }
+
+  .auth-preview {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px;
+  }
+
+  .mini-board {
+    width: 96px;
+    height: 96px;
+  }
+
+  .auth-benefits {
+    justify-content: flex-start;
+  }
+
+  .form-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  /* Dashboard Overrides */
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 20px 20px 72px;
+  }
+
+  .dashboard-content {
+    padding: 20px;
+  }
+
+  .play-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-stats .stat-item:last-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Play Page Overrides */
+  .play-mode-grid {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+  }
+
+  .play-page-content {
+    padding: 24px 20px;
+  }
+
+  .play-mode-card {
+    padding: 24px;
+  }
+
+  .engine-levels {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

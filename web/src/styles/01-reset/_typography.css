@@ -1,0 +1,35 @@
+body {
+  font-family: var(--font-primary);
+  color: var(--color-text-light);
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 680px;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-text);
+  font-size: clamp(2.4rem, 5.2vw, 4.7rem);
+  line-height: 1.12;
+  font-weight: 800;
+}
+
+h1 span {
+  color: var(--color-cyan);
+  background: linear-gradient(135deg, #a8dfff 0%, #00b0f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

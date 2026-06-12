@@ -1,0 +1,24 @@
+/* Main Page Shell Layout */
+.page-shell {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 20%, var(--color-cyan-overlay), transparent 40rem),
+    radial-gradient(circle at 85% 75%, var(--color-amber-overlay), transparent 40rem),
+    linear-gradient(180deg, var(--color-page), var(--color-page-deep));
+}
+
+/* Dashboard Page Grid Layout */
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-page);
+  transition: grid-template-columns 300ms var(--transition-bezier);
+}
+
+.dashboard-shell.sidebar-collapsed {
+  grid-template-columns: 80px minmax(0, 1fr);
+}

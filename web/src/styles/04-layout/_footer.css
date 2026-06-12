@@ -1,0 +1,26 @@
+/* Global Site Footer Styles */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 32px clamp(20px, 5vw, 64px);
+  border-top: 1px solid #303539;
+}
+
+.footer div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}

@@ -1,0 +1,6 @@
+/* Breakpoint Variables */
+:root {
+  --breakpoint-tablet: 1040px;
+  --breakpoint-mobile: 720px;
+  --breakpoint-small: 440px;
+}

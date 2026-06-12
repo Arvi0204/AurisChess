@@ -1,0 +1,99 @@
+@media (max-width: 1040px) {
+  /* Landing / Hero Layouts */
+  .hero-section,
+  .auth-page,
+  .workflow-section,
+  .benefits-section {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-section {
+    min-height: auto;
+  }
+
+  .hero-media {
+    max-width: 760px;
+    aspect-ratio: 1.35 / 1;
+  }
+
+  /* Auth Layouts */
+  .auth-page {
+    width: min(100%, 760px);
+    gap: 30px;
+    align-items: start;
+  }
+
+  .auth-story {
+    text-align: center;
+  }
+
+  .auth-story p:not(.status-pill) {
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .auth-preview {
+    margin-right: auto;
+    margin-left: auto;
+    text-align: left;
+  }
+
+  .auth-benefits {
+    justify-content: center;
+  }
+
+  .auth-panel {
+    max-width: 520px;
+  }
+
+  /* Dashboard Shell & Sidebar */
+  .dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z-index-sidebar-open);
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 300ms var(--transition-bezier);
+    box-shadow: none;
+  }
+
+  .dashboard-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-toggle {
+    display: grid;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-index-sidebar-overlay);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .dashboard-header {
+    padding-left: 72px;
+  }
+
+  .play-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Play Page Grid */
+  .play-mode-grid {
+    max-width: 720px;
+  }
+}

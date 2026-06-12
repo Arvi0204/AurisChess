@@ -29,9 +29,9 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
   if (variant === 'auth') {
     return (
       <header className="top-bar auth-top-bar">
-        <Link className="logo-link" to="/" aria-label="AurisChess home">
-          <img className="logo-graphic" src={logo} alt="" />
-          <span className="logo-text">Auris<span>Chess</span></span>
+        <Link className="logo" to="/" aria-label="AurisChess home">
+          <img className="logo__graphic" src={logo} alt="" />
+          <span className="logo__text">Auris<span>Chess</span></span>
         </Link>
         <Link className="back-link" to="/">
           <ArrowLeft size={16} aria-hidden="true" />
@@ -45,9 +45,9 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
 
   return (
     <header className="top-bar">
-      <a className="logo-link" href="#top" aria-label="AurisChess home">
-        <img className="logo-graphic" src={logo} alt="" />
-        <span className="logo-text">Auris<span>Chess</span></span>
+      <a className="logo" href="#top" aria-label="AurisChess home">
+        <img className="logo__graphic" src={logo} alt="" />
+        <span className="logo__text">Auris<span>Chess</span></span>
       </a>
       <div className="top-actions">
         <nav className="main-nav" aria-label="Primary navigation">

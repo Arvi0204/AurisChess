@@ -1,0 +1,76 @@
+:root {
+  /* Color Palette - Core Brand Colors */
+  --color-cyan: #80cfff;
+  --color-cyan-strong: #00b0f0;
+  --color-cyan-glow: rgba(128, 207, 255, 0.18);
+  --color-cyan-glow-intense: rgba(128, 207, 255, 0.25);
+  --color-cyan-border: rgba(128, 207, 255, 0.15);
+  --color-cyan-border-soft: rgba(128, 207, 255, 0.08);
+  --color-cyan-overlay: rgba(128, 207, 255, 0.07);
+  --color-cyan-overlay-hover: rgba(128, 207, 255, 0.05);
+  
+  --color-amber: #ffb95b;
+  --color-amber-glow: rgba(255, 185, 91, 0.12);
+  --color-amber-border: rgba(255, 185, 91, 0.15);
+  --color-amber-overlay: rgba(255, 185, 91, 0.03);
+  --color-amber-overlay-hover: rgba(255, 185, 91, 0.06);
+
+  /* Color Palette - Typography */
+  --color-text-light: #dfe3e7;
+  --color-text: #f0f3f5;
+  --color-muted: #aab5be;
+  --color-muted-low: #6c7a86;
+
+  /* Color Palette - Layout Backgrounds */
+  --color-page: #0b0f12;
+  --color-page-deep: #07090b;
+  
+  /* Color Palette - Card Containers */
+  --color-card-bg: rgba(18, 24, 28, 0.65);
+  --color-card-solid: #12181c;
+  --color-card-soft: #171f24;
+  --color-glass-bg: rgba(18, 24, 28, 0.45);
+  --color-glass-border: rgba(255, 255, 255, 0.05);
+
+  /* Shared Semantics (Legacy support for existing variables in components) */
+  --page: var(--color-page);
+  --page-deep: var(--color-page-deep);
+  --card: var(--color-card-bg);
+  --card-solid: var(--color-card-solid);
+  --card-soft: var(--color-card-soft);
+  --border: var(--color-cyan-border);
+  --border-soft: var(--color-cyan-border-soft);
+  --text: var(--color-text);
+  --muted: var(--color-muted);
+  --muted-low: var(--color-muted-low);
+  --cyan: var(--color-cyan);
+  --cyan-strong: var(--color-cyan-strong);
+  --cyan-glow: var(--color-cyan-glow);
+  --amber: var(--color-amber);
+  --glass-bg: var(--color-glass-bg);
+  --glass-border: var(--color-glass-border);
+
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Typography Fonts & Weights */
+  --font-primary: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-mono: 'Liberation Mono', 'Courier New', monospace;
+
+  /* Transitions & Easing */
+  --transition-bezier: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-ease: ease;
+  --transition-duration-fast: 150ms;
+  --transition-duration-normal: 200ms;
+  --transition-duration-slow: 300ms;
+  --transition-duration-slower: 400ms;
+
+  /* Shadows */
+  --shadow-elevation: 0 24px 60px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 16px 48px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}

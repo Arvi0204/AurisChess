@@ -452,7 +452,7 @@ const PlayPage = () => {
                 {/* AI / Opponent Info Bar */}
                 <div className="player-info-bar">
                   <div className="player-info-details">
-                    <div className="player-avatar ai">
+                    <div className="player-avatar player-avatar--ai">
                       <Bot size={18} />
                     </div>
                     <div className="player-name-container">
@@ -460,7 +460,7 @@ const PlayPage = () => {
                       <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
                     </div>
                   </div>
-                  <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'active-turn-ai' : ''}`}>
+                  <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
                     {formatTime(aiTime)}
                   </div>
                 </div>
@@ -512,7 +512,7 @@ const PlayPage = () => {
                 {/* Player Info Bar */}
                 <div className="player-info-bar">
                   <div className="player-info-details">
-                    <div className="player-avatar user">
+                    <div className="player-avatar player-avatar--user">
                       <User size={18} />
                     </div>
                     <div className="player-name-container">
@@ -520,7 +520,7 @@ const PlayPage = () => {
                       <span className="player-elo">Player</span>
                     </div>
                   </div>
-                  <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'active-turn' : ''}`}>
+                  <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
                     {formatTime(playerTime)}
                   </div>
                 </div>
@@ -565,7 +565,7 @@ const PlayPage = () => {
                   <div className="voice-mic-container">
                     <button
                       type="button"
-                      className={`voice-mic-btn${isVoiceActive ? ' active' : ''}`}
+                      className={`voice-mic-btn${isVoiceActive ? ' voice-mic-btn--active' : ''}`}
                       onClick={toggleVoiceControl}
                       aria-label={isVoiceActive ? 'Stop voice control' : 'Start voice control'}
                     >
@@ -579,7 +579,7 @@ const PlayPage = () => {
                     <span className="voice-status">{voiceStatus}</span>
                   </div>
 
-                  <div className={`voice-waveform${isVoiceActive ? ' active' : ''}`}>
+                  <div className={`voice-waveform${isVoiceActive ? ' voice-waveform--active' : ''}`}>
                     <div className="voice-wave-bar" />
                     <div className="voice-wave-bar" />
                     <div className="voice-wave-bar" />
@@ -602,7 +602,7 @@ const PlayPage = () => {
                   <div className="game-buttons-layout animate-fade-in">
                     <div className="control-btn-grid">
                       <button 
-                        className="game-control-btn resign-btn" 
+                        className="game-control-btn game-control-btn--resign" 
                         onClick={() => setShowResignConfirm(true)}
                         disabled={!!gameResult}
                       >
@@ -610,7 +610,7 @@ const PlayPage = () => {
                         Resign
                       </button>
                       <button 
-                        className="game-control-btn takeback-btn" 
+                        className="game-control-btn game-control-btn--takeback" 
                         onClick={undoLastTurn}
                         disabled={gameRef.current.history().length < 2}
                       >
@@ -620,7 +620,7 @@ const PlayPage = () => {
                     </div>
 
                     <button 
-                      className={`game-control-btn blindfold-btn ${blindfoldMode ? 'active' : ''}`}
+                      className={`game-control-btn game-control-btn--blindfold ${blindfoldMode ? 'game-control-btn--blindfold-active' : ''}`}
                       onClick={() => setBlindfoldMode(!blindfoldMode)}
                     >
                       {blindfoldMode ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -632,14 +632,14 @@ const PlayPage = () => {
                     <span className="resign-prompt-text">Are you sure you want to resign?</span>
                     <div className="resign-confirm-grid">
                       <button 
-                        className="game-control-btn resign-yes-btn" 
+                        className="game-control-btn game-control-btn--resign-yes" 
                         onClick={handleResign}
                       >
                         <Flag size={14} />
                         Yes, Resign
                       </button>
                       <button 
-                        className="game-control-btn resign-no-btn" 
+                        className="game-control-btn game-control-btn--resign-no" 
                         onClick={() => setShowResignConfirm(false)}
                       >
                         <Play size={14} />
@@ -682,13 +682,13 @@ const PlayPage = () => {
             <div className="play-mode-grid">
               {/* ── Card 1: Play vs Engine ──────────────────────── */}
               <article 
-                className={`play-mode-card play-mode-card--amber${modeParam === 'computer' ? ' highlighted-amber' : ''}`} 
+                className={`play-mode-card play-mode-card--amber${modeParam === 'computer' ? ' play-mode-card--highlighted-amber' : ''}`} 
                 id="play-vs-engine"
               >
-                <div className="play-mode-card-glow" aria-hidden="true" />
+                <div className="play-mode-card__glow" aria-hidden="true" />
 
-                <div className="play-mode-card-header">
-                  <div className="play-mode-icon">
+                <div className="play-mode-card__header">
+                  <div className="play-mode-card__icon">
                     <Bot size={30} aria-hidden="true" />
                   </div>
                   <div>
@@ -697,14 +697,14 @@ const PlayPage = () => {
                   </div>
                 </div>
 
-                <div className="play-mode-card-body">
+                <div className="play-mode-card__body">
                   <span className="play-mode-section-label">Engine Strength</span>
                   <div className="engine-levels">
                     {engineLevels.map(({ id, label, elo }) => (
                       <button
                         key={id}
                         type="button"
-                        className={`engine-level-btn${selectedLevel === id ? ' active' : ''}`}
+                        className={`engine-level-btn${selectedLevel === id ? ' engine-level-btn--active' : ''}`}
                         onClick={() => setSelectedLevel(id)}
                       >
                         <span className="engine-level-name">{label}</span>
@@ -734,8 +734,8 @@ const PlayPage = () => {
                   )}
                 </div>
 
-                <div className="play-mode-card-footer">
-                  <span className="play-mode-voice-badge">
+                <div className="play-mode-card__footer">
+                  <span className="play-mode-card__voice-badge">
                     <Mic size={13} aria-hidden="true" />
                     Voice Enabled
                   </span>
@@ -752,13 +752,13 @@ const PlayPage = () => {
 
               {/* ── Card 2: Play Online (Multiplayer) ──────────── */}
               <article 
-                className={`play-mode-card play-mode-card--cyan${modeParam === 'online' ? ' highlighted-cyan' : ''}`} 
+                className={`play-mode-card play-mode-card--cyan${modeParam === 'online' ? ' play-mode-card--highlighted-cyan' : ''}`} 
                 id="play-online-multiplayer"
               >
-                <div className="play-mode-card-glow" aria-hidden="true" />
+                <div className="play-mode-card__glow" aria-hidden="true" />
 
-                <div className="play-mode-card-header">
-                  <div className="play-mode-icon">
+                <div className="play-mode-card__header">
+                  <div className="play-mode-card__icon">
                     <Users size={30} aria-hidden="true" />
                   </div>
                   <div>
@@ -767,7 +767,7 @@ const PlayPage = () => {
                   </div>
                 </div>
 
-                <div className="play-mode-card-body">
+                <div className="play-mode-card__body">
                   {timeControls.map(({ category, options }) => (
                     <div key={category} className="time-control-group">
                       <span className="play-mode-section-label">{category}</span>
@@ -776,7 +776,7 @@ const PlayPage = () => {
                           <button
                             key={id}
                             type="button"
-                            className={`time-control-pill${selectedTimeControl === id ? ' active' : ''}`}
+                            className={`time-control-pill${selectedTimeControl === id ? ' time-control-pill--active' : ''}`}
                             onClick={() => setSelectedTimeControl(id)}
                           >
                             <span className="tc-time">{label}</span>
@@ -790,8 +790,8 @@ const PlayPage = () => {
                   ))}
                 </div>
 
-                <div className="play-mode-card-footer">
-                  <span className="play-mode-voice-badge">
+                <div className="play-mode-card__footer">
+                  <span className="play-mode-card__voice-badge">
                     <Mic size={13} aria-hidden="true" />
                     Voice Enabled
                   </span>

@@ -1,0 +1,70 @@
+/* Dashboard Layout Structure */
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Dashboard Header Component */
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(24px, 4vw, 40px) clamp(24px, 4vw, 48px);
+  border-bottom: 1px solid #303539;
+  background:
+    radial-gradient(ellipse at 30% 0%, var(--color-cyan-border-soft), transparent 50%),
+    #0f1417;
+}
+
+.dashboard-greeting h1 {
+  margin-bottom: 8px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.2;
+}
+
+.dashboard-greeting h1 span {
+  text-transform: capitalize;
+}
+
+.dashboard-greeting p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.dashboard-header-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+/* Dashboard Inner Layouts & Containers */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(24px, 4vw, 40px) clamp(24px, 4vw, 48px);
+  flex: 1;
+}
+
+.play-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}

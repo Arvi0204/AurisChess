@@ -1,0 +1,91 @@
+/* Parametric Animations & Keyframes */
+
+/* Voice Visualizer Bar Pulse */
+@keyframes voice-visualizer--anim {
+  0%, 100% {
+    height: 10px;
+  }
+  50% {
+    height: var(--max-height, 40px);
+  }
+}
+
+/* Voice Dance Waveform Scale */
+@keyframes voice-dance--anim {
+  0% {
+    transform: scaleY(var(--dance-start, 0.15));
+  }
+  100% {
+    transform: scaleY(var(--dance-end, 1.0));
+  }
+}
+
+/* Circular Ripple / Pulse Animation */
+@keyframes pulse--out {
+  0% {
+    transform: var(--transform-prefix, ) scale(var(--pulse-start-scale, 1));
+    opacity: 0.8;
+  }
+  100% {
+    transform: var(--transform-prefix, ) scale(var(--pulse-end-scale, 1.8));
+    opacity: 0;
+  }
+}
+
+/* Banner Slide In */
+@keyframes banner--slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade In Overlay */
+@keyframes fade--in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scale Up Cards */
+@keyframes scale--up {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Slide Scale In */
+@keyframes slide-scale--in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Slide Up overlay */
+@keyframes slide--up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

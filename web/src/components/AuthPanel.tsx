@@ -119,16 +119,16 @@ const AuthPanel = () => {
   return (
     <div className="auth-panel" aria-labelledby="auth-title">
       <div className="auth-card-mark" aria-hidden="true">
-        <Link className="logo-link" to="/" aria-label="AurisChess home">
-          <img className="logo-graphic" src={logo} alt="" />
-          <span className="logo-text">Auris<span>Chess</span></span>
+        <Link className="logo" to="/" aria-label="AurisChess home">
+          <img className="logo__graphic" src={logo} alt="" />
+          <span className="logo__text">Auris<span>Chess</span></span>
         </Link>
       </div>
 
       <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
         <button
           type="button"
-          className={!isSignup ? 'active' : undefined}
+          className={`auth-tabs__button ${!isSignup ? 'auth-tabs__button--active' : ''}`}
           onClick={() => handleModeSwitch('login')}
           aria-selected={!isSignup}
         >
@@ -136,7 +136,7 @@ const AuthPanel = () => {
         </button>
         <button
           type="button"
-          className={isSignup ? 'active' : undefined}
+          className={`auth-tabs__button ${isSignup ? 'auth-tabs__button--active' : ''}`}
           onClick={() => handleModeSwitch('signup')}
           aria-selected={isSignup}
         >

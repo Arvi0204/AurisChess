@@ -1,0 +1,55 @@
+/* Landing Page Feature, Support & Step Cards */
+.feature-card,
+.support-card,
+.workflow-steps article,
+.benefits-list {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(12px);
+  transition: transform 300ms var(--transition-bezier),
+              border-color 300ms var(--transition-ease),
+              box-shadow 300ms var(--transition-ease);
+}
+
+.feature-card:hover,
+.support-card:hover,
+.workflow-steps article:hover {
+  transform: translateY(-4px) scale(1.015);
+  border-color: rgba(128, 207, 255, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
+              0 0 20px rgba(128, 207, 255, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.feature-card {
+  position: relative;
+  display: flex;
+  min-height: clamp(280px, 28vw, 392px);
+  overflow: hidden;
+  padding: clamp(22px, 3vw, 33px);
+  border-radius: 12px;
+}
+
+.feature-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-bottom: 24px;
+  border-radius: 999px;
+  color: var(--color-cyan);
+  background: #262b2e;
+}
+
+.support-card {
+  min-height: clamp(210px, 22vw, 240px);
+  padding: clamp(22px, 3vw, 28px);
+  border-radius: 12px;
+}
+
+.support-card svg {
+  margin-bottom: 28px;
+  color: var(--color-cyan);
+}

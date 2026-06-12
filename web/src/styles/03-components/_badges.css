@@ -1,0 +1,138 @@
+/* Badges, Labels, Pills and Progress Indicators */
+.status-pill,
+.mini-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 24px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  padding: 9px 17px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--color-card-soft);
+}
+
+.status-pill svg {
+  color: var(--color-amber);
+}
+
+.notif-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-amber);
+  box-shadow: 0 0 6px rgba(255, 185, 91, 0.5);
+}
+
+/* Play Card Indicators */
+.play-card__badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.play-card--cyan .play-card__badge {
+  color: var(--color-cyan);
+  background: rgba(128, 207, 255, 0.1);
+  border: 1px solid rgba(128, 207, 255, 0.15);
+}
+
+.play-card--amber .play-card__badge {
+  color: var(--color-amber);
+  background: rgba(255, 185, 91, 0.1);
+  border: 1px solid rgba(255, 185, 91, 0.15);
+}
+
+.play-card__voice,
+.play-mode-card__voice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #b8e6d0;
+  background: rgba(100, 220, 150, 0.08);
+  border: 1px solid rgba(100, 220, 150, 0.15);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.play-mode-card__voice-badge {
+  padding: 7px 14px;
+}
+
+/* Progress and Level Bars */
+.engine-level-indicator {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.engine-level-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-white-overlay-06);
+  overflow: hidden;
+}
+
+.engine-level-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ffb95b 0%, #ff8c1a 100%);
+  box-shadow: 0 0 12px rgba(255, 185, 91, 0.3);
+  transition: width 400ms var(--transition-bezier);
+}
+
+.engine-level-current {
+  color: var(--color-amber);
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.play-overlay-progress-container {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-white-overlay-06);
+  margin: 20px 0 28px;
+  overflow: hidden;
+}
+
+.play-overlay-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ffb95b 0%, #ff8c1a 100%);
+  box-shadow: 0 0 12px rgba(255, 185, 91, 0.4);
+  transition: width 150ms var(--transition-ease);
+}
+
+.play-overlay-status {
+  margin-top: 16px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.play-overlay-card--amber .play-overlay-status {
+  color: var(--color-amber);
+}
+
+.play-overlay-card--cyan .play-overlay-status {
+  color: var(--color-cyan);
+}

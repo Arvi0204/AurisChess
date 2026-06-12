@@ -1,0 +1,173 @@
+/* Play Page Selection / Levels / Game Controls */
+.engine-level-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 14px 10px;
+  border: 1px solid var(--color-white-overlay-06);
+  border-radius: 12px;
+  background: var(--color-white-overlay-03);
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  transition: all 250ms var(--transition-bezier);
+}
+
+.engine-level-btn:hover {
+  border-color: rgba(255, 185, 91, 0.25);
+  background: var(--color-amber-overlay-hover);
+  color: var(--color-text);
+  transform: translateY(-2px);
+}
+
+.engine-level-btn--active {
+  border-color: rgba(255, 185, 91, 0.4);
+  background: rgba(255, 185, 91, 0.1);
+  color: var(--color-text);
+  box-shadow: 0 0 16px rgba(255, 185, 91, 0.08), inset 0 1px 0 var(--color-white-overlay-06);
+}
+
+.engine-level-btn--active .engine-level-elo {
+  opacity: 1;
+}
+
+.engine-level-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.engine-level-elo {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-amber);
+  opacity: 0.7;
+}
+
+.time-control-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  padding: 16px 14px;
+  border: 1px solid var(--color-white-overlay-06);
+  border-radius: 12px;
+  background: var(--color-white-overlay-03);
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  transition: all 250ms var(--transition-bezier);
+}
+
+.time-control-pill:hover {
+  border-color: rgba(128, 207, 255, 0.25);
+  background: var(--color-cyan-overlay-hover);
+  color: var(--color-text);
+  transform: translateY(-2px);
+}
+
+.time-control-pill--active {
+  border-color: rgba(128, 207, 255, 0.4);
+  background: rgba(128, 207, 255, 0.1);
+  color: var(--color-text);
+  box-shadow: 0 0 16px rgba(128, 207, 255, 0.08), inset 0 1px 0 var(--color-white-overlay-06);
+}
+
+.tc-time {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.time-control-pill--active .tc-time {
+  color: var(--color-cyan);
+}
+
+.tc-detail {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-muted-low);
+}
+
+.time-control-pill--active .tc-detail {
+  color: var(--color-muted);
+}
+
+.play-mode-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px clamp(24px, 3vw, 36px);
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 250ms var(--transition-bezier),
+              box-shadow 250ms ease,
+              background 250ms ease;
+}
+
+.play-mode-cta--amber {
+  color: var(--color-page-deep);
+  background: linear-gradient(135deg, #ffcf7e 0%, #ffb95b 50%, #ff9b20 100%);
+  box-shadow: 0 4px 16px rgba(255, 185, 91, 0.2), 0 12px 32px rgba(255, 140, 26, 0.12);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.play-mode-cta--amber:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(135deg, #ffe0a5 0%, #ffcf7e 50%, #ffb040 100%);
+  box-shadow: 0 6px 20px rgba(255, 185, 91, 0.3), 0 16px 40px rgba(255, 140, 26, 0.2);
+}
+
+.play-mode-cta--amber:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.play-mode-cta--cyan {
+  color: var(--color-page-deep);
+  background: linear-gradient(135deg, #a8dfff 0%, #80cfff 50%, #00b0f0 100%);
+  box-shadow: 0 4px 16px rgba(0, 176, 240, 0.2), 0 12px 32px rgba(0, 176, 240, 0.12);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.play-mode-cta--cyan:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(135deg, #c2e7ff 0%, #a8dfff 50%, #20c0ff 100%);
+  box-shadow: 0 6px 20px rgba(0, 176, 240, 0.3), 0 16px 40px rgba(0, 176, 240, 0.2);
+}
+
+.play-mode-cta--cyan:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.play-overlay-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-height: 42px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--color-white-overlay-03);
+  border: 1px solid var(--color-white-overlay-06);
+  color: var(--color-muted);
+  transition: all 200ms ease;
+  margin-top: 24px;
+}
+
+.play-overlay-cancel-btn:hover {
+  background: rgba(255, 60, 40, 0.06);
+  border-color: rgba(255, 100, 80, 0.2);
+  color: #ffb4ab;
+  transform: translateY(-1px);
+}

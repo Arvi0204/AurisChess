@@ -1,0 +1,19 @@
+/* Z-Index Hierarchy Configuration */
+:root {
+  --z-index-deep: 0;
+  --z-index-base: 1;
+  --z-index-above: 2;
+  
+  --z-index-resign-backdrop: 9;
+  --z-index-blindfold-overlay: 10;
+  --z-index-resign-confirm: 10;
+  --z-index-game-result: 15;
+  
+  --z-index-sidebar-closed: 80;
+  --z-index-sidebar-overlay: 999;
+  --z-index-sidebar-open: 1000;
+  --z-index-sidebar-toggle: 1001;
+  --z-index-sidebar-hover: 1002;
+  
+  --z-index-overlay: 2000;
+}

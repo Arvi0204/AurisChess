@@ -207,9 +207,9 @@ const HomePage = () => {
       </section>
 
       <footer className="footer">
-        <Link className="logo-link" to="/" aria-label="AurisChess home">
-          <img className="logo-graphic" src={logo} alt="" />
-          <span className="logo-text">Auris<span>Chess</span></span>
+        <Link className="logo" to="/" aria-label="AurisChess home">
+          <img className="logo__graphic" src={logo} alt="" />
+          <span className="logo__text">Auris<span>Chess</span></span>
         </Link>
         <div>
           <a href="#features">Features</a>

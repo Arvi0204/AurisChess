@@ -1,0 +1,155 @@
+/* Quick Stats Items */
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 18px var(--spacing-lg);
+  border: 1px solid var(--color-white-overlay-04);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--color-white-overlay-03);
+  text-align: left;
+  transition: transform 300ms var(--transition-bezier),
+              border-color 300ms var(--transition-ease),
+              box-shadow 300ms var(--transition-ease);
+}
+
+.stat-item--cyan { --stat-color: #80cfff; --stat-color-rgb: 128, 207, 255; }
+.stat-item--indigo { --stat-color: #818cf8; --stat-color-rgb: 129, 140, 248; }
+.stat-item--orange { --stat-color: #fb923c; --stat-color-rgb: 251, 146, 60; }
+.stat-item--emerald { --stat-color: #34d399; --stat-color-rgb: 52, 211, 153; }
+.stat-item--amber { --stat-color: #ffb95b; --stat-color-rgb: 255, 185, 91; }
+
+.stat-item:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(var(--stat-color-rgb), 0.35);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3), 0 0 18px rgba(var(--stat-color-rgb), 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.stat-item__icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(var(--stat-color-rgb), 0.06);
+  border: 1px solid rgba(var(--stat-color-rgb), 0.12);
+  color: var(--stat-color);
+  flex-shrink: 0;
+  transition: all 300ms var(--transition-bezier);
+}
+
+.stat-item:hover .stat-item__icon-wrapper {
+  background: rgba(var(--stat-color-rgb), 0.14);
+  border-color: rgba(var(--stat-color-rgb), 0.25);
+  transform: scale(1.06);
+}
+
+.stat-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-item__label {
+  color: var(--color-muted-low);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.stat-item__value {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Recent Games Listings */
+.recent-games {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.recent-games__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px clamp(20px, 3vw, 28px);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.recent-games__header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.recent-games__header h2 svg {
+  color: var(--color-cyan);
+}
+
+.recent-games__link {
+  color: var(--color-cyan);
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: color 200ms ease;
+}
+
+.recent-games__link:hover {
+  color: var(--color-cyan-strong);
+}
+
+.recent-games__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(40px, 6vw, 72px) 24px;
+  text-align: center;
+}
+
+.recent-games__empty-icon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--color-muted-low);
+  background: var(--color-white-overlay-04);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 8px;
+}
+
+.recent-games__empty h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.15rem;
+}
+
+.recent-games__empty p {
+  margin: 0 0 12px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.recent-games__cta {
+  min-height: 44px;
+  padding: 12px 28px;
+  font-size: 0.86rem;
+}

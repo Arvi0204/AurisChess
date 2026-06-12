@@ -1,0 +1,33 @@
+/* Text Truncation */
+.u-text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Font Families */
+.u-font-display {
+  font-family: var(--font-display);
+}
+
+.u-font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Text Capitalization & Casing */
+.u-text-capitalize {
+  text-transform: capitalize;
+}
+
+.u-text-uppercase {
+  text-transform: uppercase;
+}
+
+.u-text-center {
+  text-align: center;
+}
+
+/* Text Alignment */
+.u-align-self-end {
+  align-self: flex-end;
+}
