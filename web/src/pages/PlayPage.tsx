@@ -47,7 +47,8 @@ const PlayPage = () => {
 
   // Active Game States
   const [gameStarted, setGameStarted] = useState(false)
-  const [, setGameMode] = useState<'computer' | 'online' | null>(null)
+  const [gameMode, setGameMode] = useState<'computer' | 'online' | null>(null)
+  const stockfishRef = useRef<Worker | null>(null)
   const [gameFen, setGameFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white')
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
@@ -135,6 +136,7 @@ const PlayPage = () => {
               setSelectedSquare(null)
               setGameStarted(true)
               setGameMode('computer')
+              initStockfish()
               setIsVoiceActive(true)
               setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
             }, 1000)
@@ -161,10 +163,102 @@ const PlayPage = () => {
     return () => clearInterval(progressId)
   }, [isInitializingEngine, selectedTimeControl])
 
-  // Clock Countdown logic
+  // Initialize and manage Stockfish engine
+  const initStockfish = () => {
+    if (stockfishRef.current) {
+      stockfishRef.current.terminate()
+    }
+
+    const worker = new Worker('/stockfish.js')
+    stockfishRef.current = worker
+
+    worker.onmessage = (event: MessageEvent) => {
+      const line = event.data
+      console.log('Stockfish:', line)
+
+      if (line.startsWith('bestmove')) {
+        const parts = line.split(' ')
+        const bestMove = parts[1]
+        if (bestMove && bestMove !== '(none)') {
+          handleEngineMove(bestMove)
+        }
+      }
+    }
+
+    worker.postMessage('uci')
+    worker.postMessage('isready')
+  }
+
+  const handleEngineMove = (bestMove: string) => {
+    try {
+      const from = bestMove.slice(0, 2)
+      const to = bestMove.slice(2, 4)
+      const promotion = bestMove.slice(4, 5) || undefined
+
+      const move = gameRef.current.move({ from, to, promotion })
+      if (move) {
+        setGameFen(gameRef.current.fen())
+        checkGameStatus()
+
+        // After computer moves, execute queued manual premove if valid
+        if (manualPremove) {
+          try {
+            gameRef.current.move({
+              from: manualPremove.from,
+              to: manualPremove.to,
+              promotion: 'q'
+            })
+          } catch (e) {
+            // Illegal premove, discard silently
+          }
+          setManualPremove(null)
+        }
+        setGameFen(gameRef.current.fen())
+        checkGameStatus()
+      }
+    } catch (e) {
+      console.error('Error applying engine move:', e)
+    }
+  }
+
+  const makeEngineMove = () => {
+    if (!stockfishRef.current) return
+
+    const skillLevelMap = {
+      easy: 0,
+      medium: 6,
+      hard: 13,
+      maximum: 20,
+    }
+    const skillLevel = skillLevelMap[selectedLevel as keyof typeof skillLevelMap] ?? 6
+    stockfishRef.current.postMessage(`setoption name Skill Level value ${skillLevel}`)
+
+    const currentFen = gameRef.current.fen()
+    stockfishRef.current.postMessage(`position fen ${currentFen}`)
+
+    const depthMap = {
+      easy: 2,
+      medium: 5,
+      hard: 10,
+      maximum: 15,
+    }
+    const depth = depthMap[selectedLevel as keyof typeof depthMap] ?? 5
+    stockfishRef.current.postMessage(`go depth ${depth}`)
+  }
+
+  // Cleanup Stockfish worker on unmount
+  useEffect(() => {
+    return () => {
+      if (stockfishRef.current) {
+        stockfishRef.current.terminate()
+      }
+    }
+  }, [])
+
+  // Clock Countdown logic (only for multiplayer / online mode)
   useEffect(() => {
     let clockInterval: any
-    if (gameStarted && !gameResult) {
+    if (gameStarted && !gameResult && gameMode === 'online') {
       clockInterval = setInterval(() => {
         const turn = gameRef.current.turn() // 'w' or 'b'
         const playerIsWhite = playerColor === 'white'
@@ -192,7 +286,7 @@ const PlayPage = () => {
       }, 1000)
     }
     return () => clearInterval(clockInterval)
-  }, [gameStarted, gameResult, playerColor, gameFen])
+  }, [gameStarted, gameResult, playerColor, gameFen, gameMode])
 
   // Local chess mechanics and move handlers
   const makeMove = (moveObj: any) => {
@@ -336,6 +430,10 @@ const PlayPage = () => {
     setSelectedSquare(null)
     setIsVoiceActive(false)
     setVoiceStatus("Click mic to start speaking moves")
+    if (stockfishRef.current) {
+      stockfishRef.current.terminate()
+      stockfishRef.current = null
+    }
   }
 
   const toggleVoiceControl = () => {
@@ -352,41 +450,19 @@ const PlayPage = () => {
 
 
 
-  // Effect to handle Simulated Computer Move
+  // Trigger Stockfish when it is the AI's turn
   useEffect(() => {
     const turn = gameRef.current.turn()
     const playerIsWhite = playerColor === 'white'
     const isAiTurn = (turn === 'w' && !playerIsWhite) || (turn === 'b' && playerIsWhite)
 
-    if (gameStarted && isAiTurn && !gameResult) {
+    if (gameStarted && gameMode === 'computer' && isAiTurn && !gameResult) {
       const timer = setTimeout(() => {
-        const moves = gameRef.current.moves()
-        if (moves.length === 0) return
-
-        const randomMove = moves[Math.floor(Math.random() * moves.length)]
-        gameRef.current.move(randomMove)
-        
-        // After computer moves, execute queued manual premove if valid
-        if (manualPremove) {
-          try {
-            gameRef.current.move({
-              from: manualPremove.from,
-              to: manualPremove.to,
-              promotion: 'q'
-            })
-          } catch (e) {
-            // Illegal premove, discard silently
-          }
-          setManualPremove(null)
-        }
-        
-        setGameFen(gameRef.current.fen())
-        checkGameStatus()
-      }, 1000)
-
+        makeEngineMove()
+      }, 500) // Small delay before engine search begins
       return () => clearTimeout(timer)
     }
-  }, [gameFen, gameStarted, gameResult, playerColor, manualPremove])
+  }, [gameFen, gameStarted, gameResult, playerColor, gameMode])
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60)
@@ -456,13 +532,15 @@ const PlayPage = () => {
                       <Bot size={18} />
                     </div>
                     <div className="player-name-container">
-                      <span className="player-name">AurisChess AI ({currentLevel?.label || 'Engine'})</span>
+                      <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
                       <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
                     </div>
                   </div>
-                  <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
-                    {formatTime(aiTime)}
-                  </div>
+                  {gameMode === 'online' && (
+                    <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
+                      {formatTime(aiTime)}
+                    </div>
+                  )}
                 </div>
 
                 {/* The Chessboard Wrapper */}
@@ -520,9 +598,11 @@ const PlayPage = () => {
                       <span className="player-elo">Player</span>
                     </div>
                   </div>
-                  <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
-                    {formatTime(playerTime)}
-                  </div>
+                  {gameMode === 'online' && (
+                    <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
+                      {formatTime(playerTime)}
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -823,7 +903,7 @@ const PlayPage = () => {
             </div>
 
             <h4>Preparing Engine</h4>
-            <p>Setting up AurisChess AI (Strength: {currentLevel?.label} - Elo {currentLevel?.elo})</p>
+            <p>Setting up Stockfish (Strength: {currentLevel?.label} - Elo {currentLevel?.elo})</p>
 
             <div className="play-overlay-progress-container">
               <div 
