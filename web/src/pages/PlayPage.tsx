@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Volume2 } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -28,9 +28,47 @@ const timeControls = [
   },
 ]
 
+const playGameSound = (type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal', volume: number) => {
+  try {
+    const soundPaths = {
+      'move-self': '/sounds/move-self.mp3',
+      'move-opponent': '/sounds/move-opponent.mp3',
+      'capture': '/sounds/capture.mp3',
+      'check': '/sounds/move-check.mp3',
+      'checkmate': '/sounds/game-end.mp3',
+      'illegal': '/sounds/notify.mp3',
+    }
+    const audio = new Audio(soundPaths[type])
+    audio.volume = volume
+    audio.play().catch((err) => {
+      console.warn('Audio playback failed or was blocked:', err)
+    })
+  } catch (err) {
+    console.error('Failed to play sound:', err)
+  }
+};
+
 const PlayPage = () => {
   const [searchParams] = useSearchParams()
   const modeParam = searchParams.get('mode') // 'computer' or 'online'
+
+  const [volume, setVolume] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem('chessVolume')
+      return stored ? parseFloat(stored) : 0.5
+    } catch {
+      return 0.5
+    }
+  })
+
+  const handleVolumeChange = (newVol: number) => {
+    setVolume(newVol)
+    try {
+      localStorage.setItem('chessVolume', newVol.toString())
+    } catch {
+      // ignore
+    }
+  }
 
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState('medium')
@@ -346,6 +384,23 @@ const PlayPage = () => {
       }
       return prev
     })
+
+    // Play sound depending on the board state after move
+    const game = gameRef.current;
+    const history = game.history({ verbose: true }) as any[];
+    const lastPlayedMove = history[history.length - 1];
+
+    if (game.isCheckmate()) {
+      playGameSound('checkmate', volume);
+    } else if (game.inCheck()) {
+      playGameSound('check', volume);
+    } else if (lastPlayedMove && lastPlayedMove.captured) {
+      playGameSound('capture', volume);
+    } else {
+      const justMovedColor = game.turn() === 'w' ? 'black' : 'white'
+      const isSelfMove = justMovedColor === playerColor
+      playGameSound(isSelfMove ? 'move-self' : 'move-opponent', volume)
+    }
   }
 
   // Local chess mechanics and move handlers
@@ -400,6 +455,9 @@ const PlayPage = () => {
         to: targetSquare,
         promotion: 'q'
       })
+      if (!move) {
+        playGameSound('illegal', volume)
+      }
       return !!move
     }
     
@@ -461,6 +519,7 @@ const PlayPage = () => {
           setSelectedSquare(square)
         } else {
           setSelectedSquare(null)
+          playGameSound('illegal', volume)
         }
       }
     } else {
@@ -558,7 +617,45 @@ const PlayPage = () => {
     ? (gameRef.current.moves({ square: selectedSquare as any, verbose: true }) as any[])
     : []
 
+  const lastMove = currentMoveIndex > 0
+    ? (gameRef.current.history({ verbose: true }) as any[])[currentMoveIndex - 1]
+    : null
+
+  const getKingSquareInCheck = () => {
+    try {
+      const viewedGame = new Chess(gameFen)
+      if (!viewedGame.inCheck()) return null
+      const viewedTurn = viewedGame.turn()
+      const board = viewedGame.board()
+      for (const row of board) {
+        for (const piece of row) {
+          if (piece && piece.type === 'k' && piece.color === viewedTurn) {
+            return piece.square
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null
+  }
+
+  const kingSquare = getKingSquareInCheck()
+
   const customSquareStyles = {
+    ...(lastMove && {
+      [lastMove.from]: {
+        backgroundColor: 'rgba(247, 247, 105, 0.4)',
+      },
+      [lastMove.to]: {
+        backgroundColor: 'rgba(247, 247, 105, 0.4)',
+      }
+    }),
+    ...(kingSquare && {
+      [kingSquare]: {
+        background: 'radial-gradient(circle, rgba(255, 0, 0, 0.5) 0%, rgba(255, 0, 0, 0.2) 70%, transparent 100%)',
+      }
+    }),
     ...(selectedSquare && {
       [selectedSquare]: {
         backgroundColor: 'rgba(128, 207, 255, 0.25)',
@@ -817,7 +914,25 @@ const PlayPage = () => {
                   </div>
                 </div>
 
+              </div>
 
+              {/* Volume Slider Section */}
+              <div className="volume-control-row">
+                <div className="volume-control-header">
+                  <Volume2 size={16} className="volume-icon" />
+                  <span className="volume-label">Board Volume</span>
+                  <span className="volume-percentage">{Math.round(volume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volume}
+                  onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                  className="volume-slider"
+                  aria-label="Board volume slider"
+                />
               </div>
 
               {/* Game Control Action Buttons */}
