@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Volume2 } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Volume2, Copy, Check } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -28,7 +28,7 @@ const timeControls = [
   },
 ]
 
-const playGameSound = (type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal', volume: number) => {
+const playGameSound = (type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal' | 'resign', volume: number) => {
   try {
     const soundPaths = {
       'move-self': '/sounds/move-self.mp3',
@@ -36,6 +36,7 @@ const playGameSound = (type: 'move-self' | 'move-opponent' | 'capture' | 'check'
       'capture': '/sounds/capture.mp3',
       'check': '/sounds/move-check.mp3',
       'checkmate': '/sounds/game-end.mp3',
+      'resign': '/sounds/game-end.mp3',
       'illegal': '/sounds/notify.mp3',
     }
     const audio = new Audio(soundPaths[type])
@@ -102,6 +103,31 @@ const PlayPage = () => {
   const [blindfoldMode, setBlindfoldMode] = useState(false)
   const [showResignConfirm, setShowResignConfirm] = useState(false)
   const [gameResult, setGameResult] = useState<{ type: 'win' | 'loss' | 'draw'; reason: string } | null>(null)
+  const [showResultModal, setShowResultModal] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Auto-manage showResultModal based on gameResult
+  useEffect(() => {
+    if (gameResult) {
+      setShowResultModal(true)
+    } else {
+      setShowResultModal(false)
+    }
+  }, [gameResult])
+
+  const handleCopyPGN = () => {
+    try {
+      const pgn = gameRef.current.pgn()
+      navigator.clipboard.writeText(pgn).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }).catch(err => {
+        console.error('Failed to copy PGN:', err)
+      })
+    } catch (err) {
+      console.error('Error copying PGN:', err)
+    }
+  }
   
   // Voice Assistant States
   const [isVoiceActive, setIsVoiceActive] = useState(false)
@@ -548,6 +574,7 @@ const PlayPage = () => {
   const handleResign = () => {
     setGameResult({ type: 'loss', reason: 'Resigned' })
     setShowResignConfirm(false)
+    playGameSound('resign', volume)
   }
 
   const resetGame = () => {
@@ -785,7 +812,19 @@ const PlayPage = () => {
 
               {/* Move History list */}
               <div className="move-history-container" ref={moveHistoryRef}>
-                <span className="move-history-title">Move History</span>
+                <div className="move-history-header">
+                  <span className="move-history-title">Move History</span>
+                  {gameRef.current.history().length > 0 && (
+                    <button 
+                      className="copy-pgn-btn" 
+                      onClick={handleCopyPGN}
+                      title="Copy PGN to Clipboard"
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      {copied ? 'Copied!' : 'Copy PGN'}
+                    </button>
+                  )}
+                </div>
                 <div className="move-history-list">
                   {(() => {
                     const history = gameRef.current.history()
@@ -941,7 +980,26 @@ const PlayPage = () => {
                   <div className="resign-overlay-backdrop" onClick={() => setShowResignConfirm(false)} />
                 )}
 
-                {!showResignConfirm ? (
+                {gameResult ? (
+                  <div className="game-buttons-layout animate-fade-in">
+                    <div className="control-btn-grid">
+                      <button 
+                        className="game-control-btn game-control-btn--takeback" 
+                        onClick={resetGame}
+                      >
+                        <RotateCcw size={14} />
+                        Play Again
+                      </button>
+                      <button 
+                        className="game-control-btn game-control-btn--view-result" 
+                        onClick={() => setShowResultModal(true)}
+                      >
+                        <Eye size={14} />
+                        View Result
+                      </button>
+                    </div>
+                  </div>
+                ) : !showResignConfirm ? (
                   <div className="game-buttons-layout animate-fade-in">
                     <div className="control-btn-grid">
                       <button 
@@ -995,9 +1053,16 @@ const PlayPage = () => {
             </aside>
 
             {/* Game Result Overlay */}
-            {gameResult && (
+            {gameResult && showResultModal && (
               <div className="game-result-overlay" role="dialog" aria-modal="true" aria-label="Game Result">
                 <div className="game-result-card">
+                  <button 
+                    className="game-result-close-btn" 
+                    onClick={() => setShowResultModal(false)}
+                    aria-label="Close game result"
+                  >
+                    <X size={18} />
+                  </button>
                   <span className="game-result-title">
                     {gameResult.type === 'win' ? 'Victory!' : gameResult.type === 'loss' ? 'Defeat' : 'Draw'}
                   </span>

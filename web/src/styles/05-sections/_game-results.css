@@ -20,6 +20,7 @@
 }
 
 .game-result-card {
+  position: relative;
   background: var(--color-card-solid);
   border: 1px solid rgba(128, 207, 255, 0.15);
   padding: 32px;
@@ -50,3 +51,25 @@
   width: 100%;
   margin-top: 8px;
 }
+
+.game-result-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--color-muted-low);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-duration-fast) var(--transition-bezier);
+}
+
+.game-result-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0f3f5;
+}
+

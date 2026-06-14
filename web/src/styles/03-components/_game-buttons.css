@@ -58,6 +58,18 @@
   color: #ffcc80;
 }
 
+.game-control-btn--view-result {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+  background: var(--color-white-overlay-03);
+}
+
+.game-control-btn--view-result:hover:not(:disabled) {
+  background: var(--color-white-overlay-08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
 .game-control-btn--blindfold-active {
   background: var(--color-amber);
   color: var(--color-page-deep);
