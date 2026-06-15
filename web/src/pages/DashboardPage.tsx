@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import DashboardHeader from '../components/dashboard/DashboardHeader'
+import PageHeader from '../components/dashboard/PageHeader'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import PlayCard from '../components/dashboard/PlayCard'
 import QuickStats from '../components/dashboard/QuickStats'
@@ -29,7 +29,10 @@ const DashboardPage = () => {
       />
 
       <main className="dashboard-main">
-        <DashboardHeader username={username} />
+        <PageHeader
+          title={<>Welcome back, <span>{username}</span></>}
+          subtitle="Ready to play? Pick a mode below and start your next game."
+        />
 
         <div className="dashboard-content">
           <PlayCard />

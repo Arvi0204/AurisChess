@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import logo from '../assets/aurischess-logo.svg'
 import googleLogo from '../assets/google-logo.svg'
 import { supabase } from '../config/supabaseClient'
@@ -26,21 +27,12 @@ const AuthPanel = () => {
 
   // Feedback state
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-
-  const resetFeedback = () => {
-    setError(null)
-    setSuccess(null)
-  }
 
   const handleModeSwitch = (newMode: 'login' | 'signup') => {
     setMode(newMode)
-    resetFeedback()
   }
 
   const handleGoogleLogin = async () => {
-    resetFeedback()
     setLoading(true)
     try {
       const { error: err } = await supabase.auth.signInWithOAuth({
@@ -50,11 +42,10 @@ const AuthPanel = () => {
         }
       })
       if (err) {
-        setError(err.message)
+        toast.error(err.message)
       }
-    } catch (err) {
-      console.error('Google login error:', err)
-      setError('Could not connect to Google auth.')
+    } catch (err: any) {
+      toast.error(err.message || 'OAuth sign-in failed.')
     } finally {
       setLoading(false)
     }
@@ -62,7 +53,6 @@ const AuthPanel = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    resetFeedback()
     setLoading(true)
 
     try {
@@ -78,17 +68,17 @@ const AuthPanel = () => {
         })
 
         if (signUpError) {
-          setError(signUpError.message)
+          toast.error(signUpError.message)
           return
         }
 
         // Standard Supabase behavior: If email confirmation is enabled, session won't be active immediately
         if (data.user && !data.session) {
-          setSuccess('Signup successful! Please check your email for confirmation.')
+          toast.success('Signup successful! Please check your email for confirmation.')
           return
         }
 
-        setSuccess(`Welcome, ${name}! Account created.`)
+        toast.success(`Welcome, ${name}! Account created.`)
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -96,12 +86,12 @@ const AuthPanel = () => {
         })
 
         if (signInError) {
-          setError(signInError.message)
+          toast.error(signInError.message)
           return
         }
 
         const username = data.user?.user_metadata?.username || data.user?.email?.split('@')[0] || 'Player'
-        setSuccess(`Welcome back, ${username}!`)
+        toast.success(`Welcome back, ${username}!`)
       }
 
       // Redirect to home after a short delay (onAuthStateChange in App.tsx handles the localStorage sync)
@@ -110,7 +100,7 @@ const AuthPanel = () => {
       }, 1200)
     } catch (err: any) {
       console.error('Auth error:', err)
-      setError(err.message || 'An unexpected error occurred.')
+      toast.error(err.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
@@ -163,9 +153,7 @@ const AuthPanel = () => {
         <span>or use email</span>
       </div>
 
-      {/* Error / Success banners */}
-      {error && <div className="auth-banner auth-banner--error">{error}</div>}
-      {success && <div className="auth-banner auth-banner--success">{success}</div>}
+      {/* Error / Success toasts are handled globally */}
 
       <form className="auth-form" onSubmit={handleSubmit}>
         {isSignup && (

@@ -1,17 +1,17 @@
 import { useEffect, useState, useRef } from 'react'
+import { toast } from 'react-hot-toast'
 import {
-  User,
-  Settings,
-  Lock,
-  Volume2,
   Camera,
-  Award,
-  Activity,
   Calendar,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Award,
+  Settings
 } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
+import PageHeader from '../components/dashboard/PageHeader'
+import ProfileStatsTab from '../components/profile/ProfileStatsTab'
+import ProfileSettingsTab from '../components/profile/ProfileSettingsTab'
 import { supabase } from '../config/supabaseClient'
 
 type HistoryPoint = {
@@ -52,26 +52,16 @@ const ProfilePage = () => {
 
   // Edit Profile States
   const [newUsername, setNewUsername] = useState('')
-  const [updateMsg, setUpdateMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [updatingProfile, setUpdatingProfile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Password States
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [updatingPassword, setUpdatingPassword] = useState(false)
 
   // Gameplay Settings States
   const [volume, setVolume] = useState<number>(0.5)
-
-  // Chart hover state
-  const [hoveredPoint, setHoveredPoint] = useState<{
-    index: number
-    x: number
-    y: number
-    point: HistoryPoint
-  } | null>(null)
 
   // Load user data and settings
   useEffect(() => {
@@ -140,7 +130,6 @@ const ProfilePage = () => {
   // Handle Username Update
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    setUpdateMsg(null)
     setUpdatingProfile(true)
 
     try {
@@ -180,10 +169,10 @@ const ProfilePage = () => {
         localStorage.setItem('user', JSON.stringify(user))
       }
 
-      setUpdateMsg({ type: 'success', text: 'Username updated successfully!' })
+      toast.success('Username updated successfully!')
       fetchProfileData() // Reload profile info
     } catch (err: any) {
-      setUpdateMsg({ type: 'error', text: err.message || 'An error occurred.' })
+      toast.error(err.message || 'An error occurred.')
     } finally {
       setUpdatingProfile(false)
     }
@@ -235,7 +224,6 @@ const ProfilePage = () => {
 
   const uploadAvatar = async (base64DataUrl: string) => {
     setUpdatingProfile(true)
-    setUpdateMsg(null)
 
     try {
       const token = localStorage.getItem('authToken')
@@ -274,10 +262,10 @@ const ProfilePage = () => {
         localStorage.setItem('user', JSON.stringify(user))
       }
 
-      setUpdateMsg({ type: 'success', text: 'Profile photo updated!' })
+      toast.success('Profile photo updated!')
       fetchProfileData() // Reload
     } catch (err: any) {
-      setUpdateMsg({ type: 'error', text: err.message || 'Failed to upload photo.' })
+      toast.error(err.message || 'Failed to upload photo.')
     } finally {
       setUpdatingProfile(false)
     }
@@ -286,15 +274,14 @@ const ProfilePage = () => {
   // Handle Supabase Password Change
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
-    setPasswordMsg(null)
 
     if (newPassword.length < 6) {
-      setPasswordMsg({ type: 'error', text: 'New password must be at least 6 characters long.' })
+      toast.error('New password must be at least 6 characters long.')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'Passwords do not match.' })
+      toast.error('Passwords do not match.')
       return
     }
 
@@ -306,263 +293,17 @@ const ProfilePage = () => {
 
       if (updateError) throw updateError
 
-      setPasswordMsg({ type: 'success', text: 'Password changed successfully in Supabase Auth!' })
+      toast.success('Password changed successfully!')
       newPassword && setNewPassword('')
       confirmPassword && setConfirmPassword('')
     } catch (err: any) {
-      setPasswordMsg({ type: 'error', text: err.message || 'Failed to change password.' })
+      toast.error(err.message || 'Failed to change password.')
     } finally {
       setUpdatingPassword(false)
     }
   }
 
-  // --- Render custom interactive ELO progression SVG Chart ---
-  const renderEloChart = () => {
-    if (!stats) return null
-    const history = ratingType === 'rapid' ? stats.rapidHistory : stats.blitzHistory
 
-    if (!history || history.length === 0) {
-      return (
-        <div className="chart-empty">
-          <Activity size={24} />
-          <p>No rating changes recorded yet.</p>
-        </div>
-      )
-    }
-
-    // Chart Dimensions
-    const width = 640
-    const height = 280
-    const paddingLeft = 50
-    const paddingBottom = 40
-    const paddingTop = 20
-    const paddingRight = 20
-
-    const graphWidth = width - paddingLeft - paddingRight
-    const graphHeight = height - paddingTop - paddingBottom
-
-    // Find min/max values
-    const ratings = history.map((h) => h.rating)
-    let minVal = Math.min(...ratings)
-    let maxVal = Math.max(...ratings)
-
-    // Cushion the boundaries
-    if (minVal === maxVal) {
-      minVal -= 50
-      maxVal += 50
-    } else {
-      const range = maxVal - minVal
-      minVal = Math.max(0, Math.floor(minVal - range * 0.15))
-      maxVal = Math.ceil(maxVal + range * 0.15)
-    }
-
-    // Coordinates mapping helper
-    const getCoords = (index: number, rating: number) => {
-      const count = history.length
-      const x = paddingLeft + (index / Math.max(1, count - 1)) * graphWidth
-      const y = height - paddingBottom - ((rating - minVal) / (maxVal - minVal)) * graphHeight
-      return { x, y }
-    }
-
-    // Generate path code
-    let pathD = ''
-    const points: { x: number; y: number; point: HistoryPoint; idx: number }[] = []
-
-    history.forEach((h, i) => {
-      const { x, y } = getCoords(i, h.rating)
-      points.push({ x, y, point: h, idx: i })
-      if (i === 0) {
-        pathD += `M ${x} ${y}`
-      } else {
-        pathD += ` L ${x} ${y}`
-      }
-    })
-
-    // Construct Area Path (for gradient fill under the line)
-    let areaD = ''
-    if (points.length > 0) {
-      const first = points[0]
-      const last = points[points.length - 1]
-      const bottomY = height - paddingBottom
-      areaD = `${pathD} L ${last.x} ${bottomY} L ${first.x} ${bottomY} Z`
-    }
-
-    // Gridlines (4 horizontal helper lines)
-    const gridCount = 4
-    const gridRatings: number[] = []
-    for (let i = 0; i <= gridCount; i++) {
-      gridRatings.push(Math.round(minVal + (i / gridCount) * (maxVal - minVal)))
-    }
-
-    return (
-      <div className="svg-chart-container">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          width="100%"
-          height="100%"
-          className="svg-rating-chart"
-        >
-          <defs>
-            {/* Smooth glowing line gradient */}
-            <linearGradient id="line-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={ratingType === 'rapid' ? 'var(--cyan)' : 'var(--amber)'} />
-              <stop offset="100%" stopColor={ratingType === 'rapid' ? 'var(--accent-cyan)' : 'var(--accent-amber)'} />
-            </linearGradient>
-            {/* Area under line fill gradient */}
-            <linearGradient id="area-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor={ratingType === 'rapid' ? 'var(--cyan)' : 'var(--amber)'}
-                stopOpacity="0.15"
-              />
-              <stop
-                offset="100%"
-                stopColor={ratingType === 'rapid' ? 'var(--cyan)' : 'var(--amber)'}
-                stopOpacity="0.0"
-              />
-            </linearGradient>
-          </defs>
-
-          {/* Grid lines & Y-axis labels */}
-          {gridRatings.map((ratingVal) => {
-            const y = height - paddingBottom - ((ratingVal - minVal) / (maxVal - minVal)) * graphHeight
-            return (
-              <g key={ratingVal} className="chart-grid-group">
-                <line
-                  x1={paddingLeft}
-                  y1={y}
-                  x2={width - paddingRight}
-                  y2={y}
-                  className="chart-grid-line"
-                />
-                <text
-                  x={paddingLeft - 10}
-                  y={y + 4}
-                  className="chart-axis-text chart-y-axis-text"
-                  textAnchor="end"
-                >
-                  {ratingVal}
-                </text>
-              </g>
-            )
-          })}
-
-          {/* X-axis labels (shows dates for first, middle, and last data points) */}
-          {points.length > 0 &&
-            [0, Math.floor(points.length / 2), points.length - 1].map((ptIndex) => {
-              if (ptIndex >= points.length) return null
-              const pt = points[ptIndex]
-              const dateStr = new Date(pt.point.date).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric'
-              })
-              return (
-                <text
-                  key={ptIndex}
-                  x={pt.x}
-                  y={height - paddingBottom + 20}
-                  className="chart-axis-text chart-x-axis-text"
-                  textAnchor="middle"
-                >
-                  {dateStr}
-                </text>
-              )
-            })}
-
-          {/* Shaded Area Under Line */}
-          {areaD && <path d={areaD} fill="url(#area-gradient)" className="chart-area" />}
-
-          {/* Line Path */}
-          {pathD && (
-            <path
-              d={pathD}
-              fill="none"
-              stroke="url(#line-gradient)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              className="chart-line-path"
-            />
-          )}
-
-          {/* Nodes & Interactive Targets */}
-          {points.map((pt, i) => (
-            <g
-              key={i}
-              className={`chart-node-group${hoveredPoint?.index === i ? ' chart-node-group--hovered' : ''}`}
-              onMouseEnter={() =>
-                setHoveredPoint({
-                  index: i,
-                  x: pt.x,
-                  y: pt.y,
-                  point: pt.point
-                })
-              }
-              onMouseLeave={() => setHoveredPoint(null)}
-            >
-              {/* Inner visible circle */}
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r="4.5"
-                fill={ratingType === 'rapid' ? 'var(--cyan)' : 'var(--amber)'}
-                className="chart-node"
-              />
-              {/* Hover effect halo ring */}
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r="10"
-                fill={ratingType === 'rapid' ? 'var(--cyan)' : 'var(--amber)'}
-                fillOpacity="0.25"
-                className="chart-node-halo"
-              />
-              {/* Giant invisible trigger circle for easy hovering */}
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r="24"
-                fill="transparent"
-                style={{ cursor: 'pointer' }}
-              />
-            </g>
-          ))}
-        </svg>
-
-        {/* Hover Tooltip Popup */}
-        {hoveredPoint && (
-          <div
-            className="chart-tooltip"
-            style={{
-              left: `${(hoveredPoint.x / width) * 100}%`,
-              top: `${(hoveredPoint.y / height) * 100 - 10}%`
-            }}
-          >
-            <div className="tooltip-date">
-              {new Date(hoveredPoint.point.date).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-            <div className="tooltip-rating">
-              Rating: <strong>{hoveredPoint.point.rating}</strong>
-            </div>
-            {hoveredPoint.point.change !== 0 && (
-              <div
-                className={`tooltip-change ${
-                  hoveredPoint.point.change > 0 ? 'change-positive' : 'change-negative'
-                }`}
-              >
-                {hoveredPoint.point.change > 0 ? '+' : ''}
-                {hoveredPoint.point.change} Elo
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }
 
   // --- Render Layout ---
   return (
@@ -574,15 +315,10 @@ const ProfilePage = () => {
       />
 
       <main className="dashboard-main">
-        {/* Profile Header */}
-        <header className="dashboard-header profile-header">
-          <div className="dashboard-greeting">
-            <h1>
-              User <span>Profile</span>
-            </h1>
-            <p>Manage your account settings, credentials, and track your ELO rating stats</p>
-          </div>
-        </header>
+        <PageHeader
+          title={<>User <span>Profile</span></>}
+          subtitle="Manage your account settings, credentials, and track your ELO rating stats"
+        />
 
         {loading ? (
           <div className="profile-loading-panel">
@@ -684,258 +420,28 @@ const ProfilePage = () => {
               {/* Right Column: Tab Contents */}
               <section className="profile-content-area">
                 {activeTab === 'profile' ? (
-                  /* TAB 1: PROFILE & RATING STATS */
-                  <div className="profile-stats-tab animate-fade-in">
-                    {/* ELO Summary Cards Grid */}
-                    <div className="profile-stats-cards">
-                      <div className="stat-card glass-panel stat-card--cyan">
-                        <div className="stat-card-header">
-                          <span className="stat-card-label">Rapid Rating</span>
-                          <div className="stat-card-icon">
-                            <Award size={20} />
-                          </div>
-                        </div>
-                        <div className="stat-card-value">{stats.user.rating_rapid}</div>
-                        <span className="stat-card-footer">K-Factor: 32</span>
-                      </div>
-
-                      <div className="stat-card glass-panel stat-card--amber">
-                        <div className="stat-card-header">
-                          <span className="stat-card-label">Blitz Rating</span>
-                          <div className="stat-card-icon">
-                            <Award size={20} />
-                          </div>
-                        </div>
-                        <div className="stat-card-value">{stats.user.rating_blitz}</div>
-                        <span className="stat-card-footer">K-Factor: 32</span>
-                      </div>
-
-                      <div className="stat-card glass-panel stat-card--purple">
-                        <div className="stat-card-header">
-                          <span className="stat-card-label">Record (W / L / D)</span>
-                          <div className="stat-card-icon">
-                            <Activity size={20} />
-                          </div>
-                        </div>
-                        <div className="stat-card-value">
-                          {stats.stats.wins} - {stats.stats.losses} - {stats.stats.draws}
-                        </div>
-                        <span className="stat-card-footer">
-                          Win rate:{' '}
-                          {stats.stats.wins + stats.stats.losses + stats.stats.draws > 0
-                            ? Math.round(
-                                (stats.stats.wins /
-                                  (stats.stats.wins + stats.stats.losses + stats.stats.draws)) *
-                                  100
-                              )
-                            : 0}
-                          %
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Progression Chart Card */}
-                    <div className="chart-card glass-panel">
-                      <div className="chart-card-header">
-                        <div className="chart-card-title">
-                          <h3>Rating Progression</h3>
-                          <p>Monitor your performance rating over your recent games</p>
-                        </div>
-                        <div className="chart-toggle-buttons">
-                          <button
-                            className={`chart-toggle-btn ${
-                              ratingType === 'rapid' ? 'chart-toggle-btn--active chart-toggle-btn--rapid' : ''
-                            }`}
-                            onClick={() => {
-                              setRatingType('rapid')
-                              setHoveredPoint(null)
-                            }}
-                          >
-                            Rapid
-                          </button>
-                          <button
-                            className={`chart-toggle-btn ${
-                              ratingType === 'blitz' ? 'chart-toggle-btn--active chart-toggle-btn--blitz' : ''
-                            }`}
-                            onClick={() => {
-                              setRatingType('blitz')
-                              setHoveredPoint(null)
-                            }}
-                          >
-                            Blitz
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="chart-card-body">{renderEloChart()}</div>
-                    </div>
-                  </div>
+                  <ProfileStatsTab
+                    stats={stats}
+                    ratingType={ratingType}
+                    setRatingType={setRatingType}
+                  />
                 ) : (
-                  /* TAB 2: SETTINGS SECTION */
-                  <div className="profile-settings-tab animate-fade-in">
-                    <div className="settings-nav-row">
-                      <button
-                        className={`settings-subtab-btn ${
-                          activeSettingsSubtab === 'user' ? 'settings-subtab-btn--active' : ''
-                        }`}
-                        onClick={() => setActiveSettingsSubtab('user')}
-                      >
-                        <User size={16} />
-                        <span>User Settings</span>
-                      </button>
-                      <button
-                        className={`settings-subtab-btn ${
-                          activeSettingsSubtab === 'gameplay' ? 'settings-subtab-btn--active' : ''
-                        }`}
-                        onClick={() => setActiveSettingsSubtab('gameplay')}
-                      >
-                        <Volume2 size={16} />
-                        <span>Gameplay Settings</span>
-                      </button>
-                    </div>
-
-                    {activeSettingsSubtab === 'user' ? (
-                      /* USER ACCOUNT SUB-SETTINGS */
-                      <div className="settings-form-panel">
-                        {/* Update Username */}
-                        <div className="settings-form-card glass-panel">
-                          <h3>Edit Account Profile</h3>
-                          <p className="sub-description">Change your username displayed in lobbies and dashboards.</p>
-
-                          {updateMsg && (
-                            <div
-                              className={`auth-banner auth-banner--${
-                                updateMsg.type === 'success' ? 'success' : 'error'
-                              }`}
-                            >
-                              {updateMsg.text}
-                            </div>
-                          )}
-
-                          <form onSubmit={handleUpdateProfile} className="settings-form">
-                            <label>
-                              <span>Display Username</span>
-                              <div className="input-shell">
-                                <User size={17} />
-                                <input
-                                  type="text"
-                                  placeholder="New Username"
-                                  value={newUsername}
-                                  onChange={(e) => setNewUsername(e.target.value)}
-                                  required
-                                  minLength={3}
-                                />
-                              </div>
-                            </label>
-                            <button
-                              type="submit"
-                              className="primary-button settings-submit"
-                              disabled={updatingProfile}
-                            >
-                              {updatingProfile ? (
-                                <Loader2 className="animate-spin" size={16} />
-                              ) : (
-                                'Save Username'
-                              )}
-                            </button>
-                          </form>
-                        </div>
-
-                        {/* Change Password */}
-                        <div className="settings-form-card glass-panel">
-                          <h3>Change Password</h3>
-                          <p className="sub-description">
-                            Update your credentials. Authenticated securely via Supabase Auth.
-                          </p>
-
-                          {passwordMsg && (
-                            <div
-                              className={`auth-banner auth-banner--${
-                                passwordMsg.type === 'success' ? 'success' : 'error'
-                              }`}
-                            >
-                              {passwordMsg.text}
-                            </div>
-                          )}
-
-                          <form onSubmit={handlePasswordChange} className="settings-form">
-                            <label>
-                              <span>New Password</span>
-                              <div className="input-shell">
-                                <Lock size={17} />
-                                <input
-                                  type="password"
-                                  placeholder="Enter new password"
-                                  value={newPassword}
-                                  onChange={(e) => setNewPassword(e.target.value)}
-                                  required
-                                  minLength={6}
-                                />
-                              </div>
-                            </label>
-
-                            <label>
-                              <span>Confirm New Password</span>
-                              <div className="input-shell">
-                                <Lock size={17} />
-                                <input
-                                  type="password"
-                                  placeholder="Confirm new password"
-                                  value={confirmPassword}
-                                  onChange={(e) => setConfirmPassword(e.target.value)}
-                                  required
-                                  minLength={6}
-                                />
-                              </div>
-                            </label>
-
-                            <button
-                              type="submit"
-                              className="primary-button settings-submit"
-                              disabled={updatingPassword}
-                            >
-                              {updatingPassword ? (
-                                <Loader2 className="animate-spin" size={16} />
-                              ) : (
-                                'Change Password'
-                              )}
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                    ) : (
-                      /* GAMEPLAY SUB-SETTINGS */
-                      <div className="settings-form-panel">
-                        <div className="settings-form-card glass-panel">
-                          <h3>Sound Settings</h3>
-                          <p className="sub-description">
-                            Adjust game interface and piece move acoustics (e.g. captures, checks, resigns).
-                          </p>
-
-                          <div className="settings-volume-control">
-                            <div className="volume-control-header">
-                              <Volume2 size={20} className="volume-icon" />
-                              <span className="volume-label">Board Volume</span>
-                              <span className="volume-percentage">{Math.round(volume * 100)}%</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={volume}
-                              onChange={handleVolumeChange}
-                              className="volume-slider"
-                              aria-label="Settings board volume slider"
-                            />
-                            <p className="volume-explanation">
-                              This volume applies to all move cues, checks, captures, and chess game notifications.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <ProfileSettingsTab
+                    activeSettingsSubtab={activeSettingsSubtab}
+                    setActiveSettingsSubtab={setActiveSettingsSubtab}
+                    newUsername={newUsername}
+                    setNewUsername={setNewUsername}
+                    updatingProfile={updatingProfile}
+                    handleUpdateProfile={handleUpdateProfile}
+                    newPassword={newPassword}
+                    setNewPassword={setNewPassword}
+                    confirmPassword={confirmPassword}
+                    setConfirmPassword={setConfirmPassword}
+                    updatingPassword={updatingPassword}
+                    handlePasswordChange={handlePasswordChange}
+                    volume={volume}
+                    handleVolumeChange={handleVolumeChange}
+                  />
                 )}
               </section>
             </div>

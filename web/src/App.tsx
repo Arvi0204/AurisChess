@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { Toaster } from 'react-hot-toast'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
@@ -128,6 +129,25 @@ const App = () => {
 
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            background: '#0f1417',
+            color: '#ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '10px',
+            fontSize: '0.9rem',
+          },
+          success: {
+            iconTheme: {
+              primary: '#00b0f0',
+              secondary: '#0f1417',
+            },
+          },
+        }}
+      />
       <Routes>
         <Route
           path="/"
