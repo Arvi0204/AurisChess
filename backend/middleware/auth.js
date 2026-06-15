@@ -18,8 +18,30 @@ const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Supabase JWTs are signed with the project's JWT Secret
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.decode(token, { complete: true });
+    
+    let decoded;
+    if (decodedToken && decodedToken.header.alg === 'ES256') {
+      if (process.env.JWT_PUBLIC_KEY) {
+        // Secure cryptographic verification using the project's public key
+        decoded = jwt.verify(token, process.env.JWT_PUBLIC_KEY, { algorithms: ['ES256'] });
+      } else {
+        // Fallback for local development if JWT_PUBLIC_KEY is not defined in .env
+        console.warn('⚠️ WARNING: JWT_PUBLIC_KEY is not set. Decoding ES256 token without verification.');
+        decoded = decodedToken.payload;
+      }
+    } else {
+      // HS256 / Symmetric Verification
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (err) {
+        try {
+          decoded = jwt.verify(token, Buffer.from(process.env.JWT_SECRET, 'base64'));
+        } catch (base64Err) {
+          throw err;
+        }
+      }
+    }
     
     // Map Supabase JWT properties to standard req.user format
     req.user = {
@@ -30,6 +52,7 @@ const authenticate = (req, res, next) => {
     
     next();
   } catch (err) {
+    console.error('❌ JWT Verification failed:', err.message);
     return res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',

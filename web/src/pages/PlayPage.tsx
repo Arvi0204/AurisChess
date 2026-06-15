@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Volume2, Copy, Check } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, Check } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -53,7 +53,7 @@ const PlayPage = () => {
   const [searchParams] = useSearchParams()
   const modeParam = searchParams.get('mode') // 'computer' or 'online'
 
-  const [volume, setVolume] = useState<number>(() => {
+  const [volume] = useState<number>(() => {
     try {
       const stored = localStorage.getItem('chessVolume')
       return stored ? parseFloat(stored) : 0.5
@@ -62,14 +62,7 @@ const PlayPage = () => {
     }
   })
 
-  const handleVolumeChange = (newVol: number) => {
-    setVolume(newVol)
-    try {
-      localStorage.setItem('chessVolume', newVol.toString())
-    } catch {
-      // ignore
-    }
-  }
+
 
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState('medium')
@@ -953,25 +946,6 @@ const PlayPage = () => {
                   </div>
                 </div>
 
-              </div>
-
-              {/* Volume Slider Section */}
-              <div className="volume-control-row">
-                <div className="volume-control-header">
-                  <Volume2 size={16} className="volume-icon" />
-                  <span className="volume-label">Board Volume</span>
-                  <span className="volume-percentage">{Math.round(volume * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={volume}
-                  onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                  className="volume-slider"
-                  aria-label="Board volume slider"
-                />
               </div>
 
               {/* Game Control Action Buttons */}

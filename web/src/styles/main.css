@@ -39,6 +39,7 @@
 @import url('./05-sections/_game-board.css');
 @import url('./05-sections/_game-controls.css');
 @import url('./05-sections/_game-results.css');
+@import url('./05-sections/_profile.css');
 
 /* 06-Responsive Layer */
 @import url('./06-responsive/_tablet.css');

@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
 import PlayPage from './pages/PlayPage'
+import ProfilePage from './pages/ProfilePage'
 import { supabase } from './config/supabaseClient'
 
 function isLoggedIn(): boolean {
@@ -36,12 +37,82 @@ const App = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         localStorage.setItem('authToken', session.access_token)
+        
+        // Preserve locally stored avatar_url if any exists
+        let existingAvatar = ''
+        try {
+          const stored = localStorage.getItem('user')
+          if (stored) {
+            existingAvatar = JSON.parse(stored).avatar_url || ''
+          }
+        } catch {
+          // ignore
+        }
+
         const user = {
           id: session.user.id,
           email: session.user.email,
-          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Player'
+          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Player',
+          avatar_url: session.user.user_metadata?.avatar_url || existingAvatar || ''
         }
         localStorage.setItem('user', JSON.stringify(user))
+
+        // Asynchronously sync the username and avatar from the Postgres DB
+        fetch('http://localhost:3000/api/user/stats', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        })
+          .then(res => {
+            if (res.ok) return res.json()
+            throw new Error('Failed to fetch stats')
+          })
+          .then(resJson => {
+            if (resJson?.data?.user) {
+              const dbUser = resJson.data.user
+              const currentStored = localStorage.getItem('user')
+              let userObj = currentStored ? JSON.parse(currentStored) : user
+              
+              let changed = false
+              if (dbUser.username && dbUser.username !== userObj.username) {
+                userObj.username = dbUser.username
+                changed = true
+              }
+              if (dbUser.avatar_url && dbUser.avatar_url !== userObj.avatar_url) {
+                userObj.avatar_url = dbUser.avatar_url
+                changed = true
+              }
+              
+              if (changed) {
+                localStorage.setItem('user', JSON.stringify(userObj))
+                
+                // Also update Supabase metadata so it's persisted in the auth session
+                supabase.auth.updateUser({
+                  data: {
+                    username: userObj.username,
+                    avatar_url: userObj.avatar_url
+                  }
+                }).catch(e => console.error('Failed to sync auth metadata', e))
+                
+                // Force a state update to trigger UI re-renders across components
+                setSessionState(prev => prev ? { 
+                  ...prev, 
+                  user: { 
+                    ...prev.user, 
+                    user_metadata: { 
+                      ...prev.user.user_metadata, 
+                      username: userObj.username, 
+                      avatar_url: userObj.avatar_url 
+                    } 
+                  } 
+                } : prev)
+              }
+            }
+          })
+          .catch(err => {
+            console.warn('Could not sync user details with Postgres DB:', err)
+          })
+
       } else {
         localStorage.removeItem('authToken')
         localStorage.removeItem('user')
@@ -85,6 +156,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <PlayPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

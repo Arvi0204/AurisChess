@@ -46,6 +46,18 @@ const DashboardSidebar = ({
 
   const initial = username.charAt(0).toUpperCase()
 
+  // Read avatar_url from localStorage if available
+  let avatarUrl = ''
+  try {
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      const user = JSON.parse(stored)
+      avatarUrl = user.avatar_url || ''
+    }
+  } catch {
+    // ignore
+  }
+
   return (
     <>
       <button
@@ -103,15 +115,24 @@ const DashboardSidebar = ({
         </div>
 
         <div className="sidebar-bottom">
-          <div className="sidebar-profile" title={isCollapsed ? username : undefined}>
+          <Link
+            to="/profile"
+            className="sidebar-profile"
+            title={isCollapsed ? username : undefined}
+            onClick={() => setMobileOpen(false)}
+          >
             <div className="sidebar-avatar" aria-hidden="true">
-              {initial}
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="sidebar-avatar-img" />
+              ) : (
+                initial
+              )}
             </div>
             <div className="sidebar-user-info">
               <strong>{username}</strong>
               <span className="sidebar-role">Player</span>
             </div>
-          </div>
+          </Link>
 
           <button
             className="sidebar-logout"
