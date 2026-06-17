@@ -4,6 +4,8 @@ import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
+import { useChessVoiceControl } from '../hooks/useChessVoiceControl'
+
 
 const engineLevels = [
   { id: 'easy', label: 'Easy', elo: '800' },
@@ -654,6 +656,19 @@ const PlayPage = () => {
       return next
     })
   }
+
+  useChessVoiceControl({
+    game: gameRef.current,
+    makeMove,
+    setBlindfoldMode,
+    setShowResignConfirm,
+    showResignConfirm,
+    handleResign,
+    isVoiceActive,
+    setVoiceStatus,
+    volume,
+  })
+
 
 
 
