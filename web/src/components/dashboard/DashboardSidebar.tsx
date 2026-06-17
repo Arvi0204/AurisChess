@@ -44,19 +44,23 @@ const DashboardSidebar = ({
   }
 
 
-  const initial = username.charAt(0).toUpperCase()
-
-  // Read avatar_url from localStorage if available
+  // Read username and avatarUrl from localStorage if available
+  let displayUsername = username
   let avatarUrl = ''
   try {
     const stored = localStorage.getItem('user')
     if (stored) {
       const user = JSON.parse(stored)
       avatarUrl = user.avatar_url || ''
+      if (!username || username === 'Player') {
+        displayUsername = user.username || 'Player'
+      }
     }
   } catch {
     // ignore
   }
+
+  const initial = displayUsername.charAt(0).toUpperCase()
 
   return (
     <>
@@ -118,7 +122,7 @@ const DashboardSidebar = ({
           <Link
             to="/profile"
             className="sidebar-profile"
-            title={isCollapsed ? username : undefined}
+            title={isCollapsed ? displayUsername : undefined}
             onClick={() => setMobileOpen(false)}
           >
             <div className="sidebar-avatar" aria-hidden="true">
@@ -129,7 +133,7 @@ const DashboardSidebar = ({
               )}
             </div>
             <div className="sidebar-user-info">
-              <strong>{username}</strong>
+              <strong>{displayUsername}</strong>
               <span className="sidebar-role">Player</span>
             </div>
           </Link>

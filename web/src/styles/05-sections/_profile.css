@@ -11,7 +11,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--spacing-md, 16px) var(--spacing-xl, 40px) var(--spacing-md, 16px);
+  padding: clamp(24px, 4vw, 40px) clamp(24px, 4vw, 48px) var(--spacing-xl, 40px) clamp(24px, 4vw, 48px);
 }
 
 .profile-header {

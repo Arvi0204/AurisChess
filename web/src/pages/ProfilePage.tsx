@@ -309,7 +309,16 @@ const ProfilePage = () => {
   return (
     <div className={`dashboard-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>
       <DashboardSidebar
-        username={stats?.user.username || 'Player'}
+        username={stats?.user.username || (() => {
+          try {
+            const stored = localStorage.getItem('user')
+            if (stored) {
+              const user = JSON.parse(stored)
+              return user.username || 'Player'
+            }
+          } catch (e) {}
+          return 'Player'
+        })()}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
       />

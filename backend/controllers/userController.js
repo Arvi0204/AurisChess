@@ -27,23 +27,35 @@ const getUserStats = async (req, res) => {
   try {
     const dbUser = await getOrCreateUser(req.user.email, req.user.username);
 
-    // Fetch rapid rating history
-    let rapidHistory = await db.any(
-      `SELECT rating_after as rating, change_amount as change, created_at as date 
-       FROM rating_history 
-       WHERE user_id = $1 AND game_type = $2 
-       ORDER BY created_at ASC`,
-      [dbUser.id, 'rapid']
-    );
+    // Fetch rating history and game stats in parallel to reduce database latency (round-trips)
+    const [rapidHistoryRes, blitzHistoryRes, statsResult] = await Promise.all([
+      db.any(
+        `SELECT rating_after as rating, change_amount as change, created_at as date 
+         FROM rating_history 
+         WHERE user_id = $1 AND game_type = $2 
+         ORDER BY created_at ASC`,
+        [dbUser.id, 'rapid']
+      ),
+      db.any(
+        `SELECT rating_after as rating, change_amount as change, created_at as date 
+         FROM rating_history 
+         WHERE user_id = $1 AND game_type = $2 
+         ORDER BY created_at ASC`,
+        [dbUser.id, 'blitz']
+      ),
+      db.one(
+        `SELECT 
+          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'white') OR (black_player_id = $1 AND result = 'black')) as wins,
+          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'black') OR (black_player_id = $1 AND result = 'white')) as losses,
+          COUNT(*) FILTER (WHERE result = 'draw') as draws
+        FROM games
+        WHERE white_player_id = $1 OR black_player_id = $1`,
+        [dbUser.id]
+      )
+    ]);
 
-    // Fetch blitz rating history
-    let blitzHistory = await db.any(
-      `SELECT rating_after as rating, change_amount as change, created_at as date 
-       FROM rating_history 
-       WHERE user_id = $1 AND game_type = $2 
-       ORDER BY created_at ASC`,
-      [dbUser.id, 'blitz']
-    );
+    let rapidHistory = rapidHistoryRes;
+    let blitzHistory = blitzHistoryRes;
 
     const now = new Date();
 
@@ -69,17 +81,6 @@ const getUserStats = async (req, res) => {
         { rating: 1225, change: 23, date: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() }
       ];
     }
-
-    // Fetch win / loss / draw stats
-    const statsResult = await db.one(
-      `SELECT 
-        COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'white') OR (black_player_id = $1 AND result = 'black')) as wins,
-        COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'black') OR (black_player_id = $1 AND result = 'white')) as losses,
-        COUNT(*) FILTER (WHERE result = 'draw') as draws
-      FROM games
-      WHERE white_player_id = $1 OR black_player_id = $1`,
-      [dbUser.id]
-    );
 
     // Determine if user has any real games recorded
     const totalRealGames = parseInt(statsResult.wins) + parseInt(statsResult.losses) + parseInt(statsResult.draws);
