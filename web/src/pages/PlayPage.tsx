@@ -108,6 +108,49 @@ const PlayPage = () => {
     }
   }, [gameResult])
 
+  const saveEngineGameToDb = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) return
+
+      let resultStr: 'white' | 'black' | 'draw' = 'draw'
+      if (gameResult?.type === 'win') {
+        resultStr = playerColor
+      } else if (gameResult?.type === 'loss') {
+        resultStr = playerColor === 'white' ? 'black' : 'white'
+      }
+
+      const pgn = gameRef.current.pgn()
+
+      await fetch('http://localhost:3000/api/user/game-end-engine', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          playerColor,
+          result: resultStr,
+          pgn,
+          blindfoldMoves: blindfoldMovesRef.current,
+          totalMoves: totalMovesRef.current
+        })
+      })
+    } catch (err) {
+      console.error('Failed to auto-save engine game to database:', err)
+    }
+  }
+
+  // Save game to database automatically when game ends
+  useEffect(() => {
+    if (gameResult && gameMode === 'computer') {
+      const totalMoves = totalMovesRef.current
+      if (totalMoves >= 2) {
+        saveEngineGameToDb()
+      }
+    }
+  }, [gameResult, gameMode])
+
   const handleCopyPGN = () => {
     try {
       const pgn = gameRef.current.pgn()
@@ -131,6 +174,8 @@ const PlayPage = () => {
   // Ref for chess game instance to prevent stale closure issues
   const gameRef = useRef(new Chess())
   const moveHistoryRef = useRef<HTMLDivElement>(null)
+  const totalMovesRef = useRef(0)
+  const blindfoldMovesRef = useRef(0)
 
   // Autoscroll move history to bottom when new moves are added
   useEffect(() => {
@@ -239,6 +284,8 @@ const PlayPage = () => {
               setSelectedSquare(null)
               setGameStarted(true)
               setGameMode('computer')
+              totalMovesRef.current = 0
+              blindfoldMovesRef.current = 0
               initStockfish()
               setIsVoiceActive(true)
               setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
@@ -392,6 +439,10 @@ const PlayPage = () => {
   }, [gameStarted, gameResult, playerColor, fenHistory.length, gameMode])
 
   const updateGameStateAfterMove = () => {
+    totalMovesRef.current += 1
+    if (blindfoldMode) {
+      blindfoldMovesRef.current += 1
+    }
     const nextFen = gameRef.current.fen()
     setFenHistory(prev => [...prev, nextFen])
     setCurrentMoveIndex(prev => {
@@ -582,6 +633,8 @@ const PlayPage = () => {
       stockfishRef.current.terminate()
       stockfishRef.current = null
     }
+    totalMovesRef.current = 0
+    blindfoldMovesRef.current = 0
     // Reset FEN history
     gameRef.current = new Chess()
     const initialFen = gameRef.current.fen()

@@ -153,3 +153,156 @@
   padding: 12px 28px;
   font-size: 0.86rem;
 }
+
+/* Recent Games List Items */
+.recent-games__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-game-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px clamp(20px, 3vw, 28px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background-color 200ms ease;
+}
+
+.recent-game-item:last-child {
+  border-bottom: none;
+}
+
+.recent-game-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.recent-game-item__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.recent-game-item__opponent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recent-game-item__opponent {
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.recent-game-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recent-game-item__badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.recent-game-item__badge--engine {
+  background-color: rgba(255, 185, 91, 0.1);
+  border: 1px solid rgba(255, 185, 91, 0.2);
+  color: #ffb95b;
+}
+
+.recent-game-item__badge--rapid {
+  background-color: rgba(128, 207, 255, 0.1);
+  border: 1px solid rgba(128, 207, 255, 0.2);
+  color: #80cfff;
+}
+
+.recent-game-item__badge--blitz {
+  background-color: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  color: #818cf8;
+}
+
+.recent-game-item__badge--blindfold {
+  background-color: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  color: #c084fc;
+}
+
+.recent-game-item__date {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.recent-game-item__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.recent-game-item__details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.recent-game-item__outcome {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.recent-game-item__outcome--win {
+  color: #34d399;
+}
+
+.recent-game-item__outcome--loss {
+  color: #f87171;
+}
+
+.recent-game-item__outcome--draw {
+  color: var(--color-muted);
+}
+
+.recent-game-item__moves {
+  color: var(--color-muted-low);
+  font-size: 0.78rem;
+}
+
+.recent-game-item__copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--color-muted);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.recent-game-item__copy-btn:hover {
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.recent-game-item__copy-btn--copied {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.2);
+  background-color: rgba(52, 211, 153, 0.05);
+}

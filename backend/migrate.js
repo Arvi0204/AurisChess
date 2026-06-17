@@ -25,11 +25,18 @@ async function runMigrations() {
           game_type VARCHAR(20) NOT NULL,
           result VARCHAR(10) NOT NULL,
           pgn TEXT,
+          blindfold_moves INTEGER DEFAULT 0,
+          total_moves INTEGER DEFAULT 0,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_games_players ON games(white_player_id, black_player_id);
+      
+      -- Ensure columns exist in case the table was already created
+      ALTER TABLE games 
+      ADD COLUMN IF NOT EXISTS blindfold_moves INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS total_moves INTEGER DEFAULT 0;
     `);
-    console.log('✅ Games table created successfully.');
+    console.log('✅ Games table created/updated successfully.');
 
     // 3. Create rating_history table
     console.log('✏️ Creating rating_history table...');

@@ -96,7 +96,7 @@ const App = () => {
                 }).catch(e => console.error('Failed to sync auth metadata', e))
                 
                 // Force a state update to trigger UI re-renders across components
-                setSessionState(prev => prev ? { 
+                setSessionState((prev: any) => prev ? { 
                   ...prev, 
                   user: { 
                     ...prev.user, 

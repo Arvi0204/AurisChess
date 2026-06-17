@@ -49,7 +49,7 @@ const getUserStats = async (req, res) => {
           COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'black') OR (black_player_id = $1 AND result = 'white')) as losses,
           COUNT(*) FILTER (WHERE result = 'draw') as draws
         FROM games
-        WHERE white_player_id = $1 OR black_player_id = $1`,
+        WHERE (white_player_id = $1 OR black_player_id = $1) AND game_type IN ('rapid', 'blitz')`,
         [dbUser.id]
       )
     ]);
@@ -254,8 +254,93 @@ const endMultiplayerGame = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/user/game-end-engine
+ * Save a practice game played against the computer.
+ */
+const saveEngineGame = async (req, res) => {
+  const { playerColor, result, pgn, blindfoldMoves, totalMoves } = req.body;
+
+  if (!playerColor || !result) {
+    return res.status(400).json({ success: false, message: 'Missing required parameters.' });
+  }
+
+  try {
+    const dbUser = await getOrCreateUser(req.user.email, req.user.username);
+
+    // Save the game record, with the computer player set to NULL
+    const whitePlayerId = playerColor === 'white' ? dbUser.id : null;
+    const blackPlayerId = playerColor === 'black' ? dbUser.id : null;
+
+    const game = await db.one(
+      `INSERT INTO games (white_player_id, black_player_id, game_type, result, pgn, blindfold_moves, total_moves)
+       VALUES ($1, $2, 'engine', $3, $4, $5, $6)
+       RETURNING id`,
+      [
+        whitePlayerId,
+        blackPlayerId,
+        result, // 'white', 'black', or 'draw'
+        pgn || '',
+        parseInt(blindfoldMoves, 10) || 0,
+        parseInt(totalMoves, 10) || 0
+      ]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Engine game saved successfully.',
+      data: { gameId: game.id },
+    });
+  } catch (err) {
+    console.error('Error saving engine game:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
+/**
+ * GET /api/user/games
+ * Fetch recent games played by the user (both multiplayer and engine).
+ */
+const getUserGames = async (req, res) => {
+  try {
+    const dbUser = await getOrCreateUser(req.user.email, req.user.username);
+
+    const games = await db.any(
+      `SELECT 
+        g.id,
+        g.game_type,
+        g.result,
+        g.pgn,
+        g.blindfold_moves,
+        g.total_moves,
+        g.created_at,
+        w.username as white_username,
+        w.email as white_email,
+        b.username as black_username,
+        b.email as black_email
+      FROM games g
+      LEFT JOIN users w ON g.white_player_id = w.id
+      LEFT JOIN users b ON g.black_player_id = b.id
+      WHERE g.white_player_id = $1 OR g.black_player_id = $1
+      ORDER BY g.created_at DESC
+      LIMIT 10`,
+      [dbUser.id]
+    );
+
+    return res.json({
+      success: true,
+      data: { games },
+    });
+  } catch (err) {
+    console.error('Error fetching user games:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
 module.exports = {
   getUserStats,
   updateProfile,
   endMultiplayerGame,
+  saveEngineGame,
+  getUserGames,
 };
