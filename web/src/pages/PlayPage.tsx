@@ -665,6 +665,11 @@ const PlayPage = () => {
     showResignConfirm,
     handleResign,
     isVoiceActive,
+    isPlayerTurn: (() => {
+      const t = gameRef.current.turn()
+      const piw = playerColor === 'white'
+      return (t === 'w' && piw) || (t === 'b' && !piw)
+    })(),
     setVoiceStatus,
     volume,
   })
