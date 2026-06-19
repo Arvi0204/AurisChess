@@ -326,7 +326,6 @@ const PlayPage = () => {
 
     worker.onmessage = (event: MessageEvent) => {
       const line = event.data
-      console.log('Stockfish:', line)
 
       if (line.startsWith('bestmove')) {
         const parts = line.split(' ')
