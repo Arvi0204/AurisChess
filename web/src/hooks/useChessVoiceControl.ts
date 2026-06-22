@@ -153,7 +153,12 @@ export const useChessVoiceControl = ({
     }
     if (cleanText.match(/\b(resign|give up|forfeit)\b/)) {
       current.setShowResignConfirm(true);
-      speakText('Are you sure you want to resign? Say yes to confirm or no to keep playing.');
+      const resignPrompt = 'Are you sure you want to resign? Say yes to confirm or no to keep playing.';
+      // Block mic for the full TTS duration + 3s extra buffer so the speaker
+      // output (which contains the word "yes") is not picked up by the mic.
+      const estimatedBlockMs = resignPrompt.split(' ').length * 400 + 3000;
+      ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
+      speakText(resignPrompt);
       current.setVoiceStatus("Confirm resignation by saying 'yes' or 'no'");
       return;
     }
@@ -195,15 +200,28 @@ export const useChessVoiceControl = ({
       const pieceName = getPieceFullName(move.piece);
       const isCapture = move.flags.includes('c') || move.san.includes('x');
 
+      // ── Piece name matching ─────────────────────────────────────────────────
+      // Determine whether the user explicitly named a piece in their command.
+      const namedPieces = ['knight','bishop','rook','queen','king','pawn'];
+      const spokenPiece = namedPieces.find(p => cleanText.includes(p)) ?? null;
+
+      if (spokenPiece) {
+        // User named a piece — hard-filter: wrong piece type gets eliminated
+        if (pieceName !== spokenPiece && !(spokenPiece === 'castle' && pieceName === 'rook')) {
+          // Exception: allow castle keyword to match rook-based castling moves below
+          if (!(move.san === 'O-O' || move.san === 'O-O-O')) {
+            continue; // skip entirely — user said a different piece name
+          }
+        } else {
+          score += 8; // correct piece name bonus
+        }
+      } else if (pieceName === 'pawn') {
+        score += 3; // slight pawn preference when no piece name spoken
+      }
+
       if (cleanText.replace(/\s+/g, '') === move.san.toLowerCase()) score += 20;
       if (spokenTo && spokenTo === move.to)       score += 10;
       else if (cleanText.includes(move.to))        score += 8;
-
-      if (pieceName === 'pawn') {
-        if (!['knight','bishop','rook','castle','queen','king'].some(p => cleanText.includes(p))) score += 5;
-      } else if (cleanText.includes(pieceName) || (pieceName === 'rook' && cleanText.includes('castle'))) {
-        score += 5;
-      }
 
       if (isCapture && (cleanText.includes('take') || cleanText.includes('capture') || cleanText.includes('x'))) score += 3;
       if ((spokenFrom && spokenFrom === move.from) ||

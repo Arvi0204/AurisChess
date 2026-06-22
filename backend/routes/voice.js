@@ -33,9 +33,11 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
       model: 'whisper-large-v3-turbo', // fastest Whisper model on Groq
       language: 'en',
       response_format: 'json',
-      // Hint Whisper about expected chess vocabulary so it transcribes
-      // single-char notation (e4, d4, Nf3) correctly instead of mishearing them
-      prompt: 'Chess move commands. Pawn: e4, d4, c5, e5. Knight: Nf3, Nc3. Bishop: Bc4, Bf4. Rook: Rd1. Queen: Qd1. King: Ke2. Castle kingside. Castle queenside. Resign. Blindfold.',
+      // IMPORTANT: Whisper treats `prompt` as prior transcript context, not a
+      // vocabulary hint list. Including example moves (e.g. "Rd1") causes Whisper
+      // to hallucinate those moves at the start of every transcription.
+      // Use only a short domain descriptor — no example move notation.
+      prompt: 'Chess voice command. Piece names: pawn, knight, bishop, rook, queen, king. Actions: castle kingside, castle queenside, resign, blindfold.',
     });
 
     const transcript = (transcription.text || '').trim();
