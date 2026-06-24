@@ -21,6 +21,7 @@ interface VoiceControlProps {
   isPlayerTurn: boolean;
   setVoiceStatus: (status: string) => void;
   volume: number;
+  gameResult: { type: 'win' | 'loss' | 'draw'; reason: string } | null;
 }
 
 export const useChessVoiceControl = ({
@@ -34,6 +35,7 @@ export const useChessVoiceControl = ({
   isPlayerTurn,
   setVoiceStatus,
   volume,
+  gameResult,
 }: VoiceControlProps) => {
   // Refs for the audio pipeline
   const mediaStreamRef    = useRef<MediaStream | null>(null);
@@ -53,14 +55,14 @@ export const useChessVoiceControl = ({
   // Ref mirror of all props to avoid stale closures
   const refs = useRef({
     game, makeMove, setBlindfoldMode, setShowResignConfirm,
-    showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume,
+    showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
   });
   useEffect(() => {
     refs.current = {
       game, makeMove, setBlindfoldMode, setShowResignConfirm,
-      showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume,
+      showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
     };
-  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume]);
+  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult]);
 
   useEffect(() => { isActiveRef.current = isVoiceActive; }, [isVoiceActive]);
 
@@ -457,12 +459,16 @@ export const useChessVoiceControl = ({
       startPipeline();
     } else {
       stopPipeline();
-      refs.current.setVoiceStatus('Voice control stopped');
+      if (gameResult) {
+        refs.current.setVoiceStatus('Voice control stopped (game ended)');
+      } else {
+        refs.current.setVoiceStatus('Voice control stopped');
+      }
     }
 
     return () => {
       // Clean up on unmount or isVoiceActive change
       stopPipeline();
     };
-  }, [isVoiceActive, startPipeline, stopPipeline]);
+  }, [isVoiceActive, startPipeline, stopPipeline, gameResult]);
 };
