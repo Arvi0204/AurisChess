@@ -5,7 +5,10 @@ const db = require('../config/db');
  * This bridges Supabase Auth and our Postgres schema.
  */
 async function getOrCreateUser(email, username) {
-  let user = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+  let user = await db.oneOrNone(
+    'SELECT id, username, email, rating_rapid, rating_blitz, avatar_url, created_at FROM users WHERE email = $1',
+    [email.toLowerCase()]
+  );
   if (!user) {
     // If the user doesn't exist locally, create a record.
     // Use a default ELO of 1200 and a mock password hash since they authenticate via Supabase.
@@ -124,9 +127,8 @@ const updateProfile = async (req, res) => {
   try {
     const dbUser = await getOrCreateUser(req.user.email, req.user.username);
 
-    let query = 'UPDATE users SET ';
-    const params = [];
-    let paramIndex = 1;
+    // Build update fields declaratively to avoid fragile string concatenation
+    const updates = []; // [{ col: string, val: any }]
 
     if (username !== undefined && username.trim() !== '') {
       const sanitizedUsername = username.trim().toLowerCase();
@@ -136,26 +138,24 @@ const updateProfile = async (req, res) => {
           return res.status(409).json({ success: false, message: 'Username is already taken.' });
         }
       }
-      query += `username = $${paramIndex}, `;
-      params.push(sanitizedUsername);
-      paramIndex++;
+      updates.push({ col: 'username', val: sanitizedUsername });
     }
 
     if (avatar_url !== undefined) {
-      query += `avatar_url = $${paramIndex}, `;
-      params.push(avatar_url);
-      paramIndex++;
+      updates.push({ col: 'avatar_url', val: avatar_url });
     }
 
-    if (params.length === 0) {
+    if (updates.length === 0) {
       return res.status(400).json({ success: false, message: 'No fields to update.' });
     }
 
-    query = query.slice(0, -2); // remove trailing comma and space
-    query += ` WHERE id = $${paramIndex} RETURNING id, username, email, rating_rapid, rating_blitz, avatar_url`;
-    params.push(dbUser.id);
+    // e.g. "username = $1, avatar_url = $2"
+    const setClauses = updates.map((u, i) => `${u.col} = $${i + 1}`).join(', ');
+    const values     = updates.map(u => u.val);
+    const idIndex    = updates.length + 1;
 
-    const updatedUser = await db.one(query, params);
+    const query = `UPDATE users SET ${setClauses} WHERE id = $${idIndex} RETURNING id, username, email, rating_rapid, rating_blitz, avatar_url`;
+    const updatedUser = await db.one(query, [...values, dbUser.id]);
 
     return res.json({
       success: true,
@@ -217,27 +217,22 @@ const endMultiplayerGame = async (req, res) => {
       [whiteUser.id, blackUser.id, gameType, result, pgn || '']
     );
 
-    // Save ratings in users table
-    if (isRapid) {
-      await db.none('UPDATE users SET rating_rapid = $1 WHERE id = $2', [newRA, whiteUser.id]);
-      await db.none('UPDATE users SET rating_rapid = $1 WHERE id = $2', [newRB, blackUser.id]);
-    } else {
-      await db.none('UPDATE users SET rating_blitz = $1 WHERE id = $2', [newRA, whiteUser.id]);
-      await db.none('UPDATE users SET rating_blitz = $1 WHERE id = $2', [newRB, blackUser.id]);
-    }
-
-    // Record rating logs
-    await db.none(
-      `INSERT INTO rating_history (user_id, game_id, game_type, rating_after, change_amount)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [whiteUser.id, game.id, gameType, newRA, changeA]
-    );
-
-    await db.none(
-      `INSERT INTO rating_history (user_id, game_id, game_type, rating_after, change_amount)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [blackUser.id, game.id, gameType, newRB, changeB]
-    );
+    // Save ratings and record history in parallel
+    const ratingColumn = isRapid ? 'rating_rapid' : 'rating_blitz';
+    await Promise.all([
+      db.none(`UPDATE users SET ${ratingColumn} = $1 WHERE id = $2`, [newRA, whiteUser.id]),
+      db.none(`UPDATE users SET ${ratingColumn} = $1 WHERE id = $2`, [newRB, blackUser.id]),
+      db.none(
+        `INSERT INTO rating_history (user_id, game_id, game_type, rating_after, change_amount)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [whiteUser.id, game.id, gameType, newRA, changeA]
+      ),
+      db.none(
+        `INSERT INTO rating_history (user_id, game_id, game_type, rating_after, change_amount)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [blackUser.id, game.id, gameType, newRB, changeB]
+      ),
+    ]);
 
     return res.json({
       success: true,

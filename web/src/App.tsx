@@ -9,6 +9,7 @@ import PlayPage from './pages/PlayPage'
 import ProfilePage from './pages/ProfilePage'
 import ReviewPage from './pages/ReviewPage'
 import { supabase } from './config/supabaseClient'
+import { API_BASE } from './config/api'
 
 function isLoggedIn(): boolean {
   const token = localStorage.getItem('authToken')
@@ -61,7 +62,7 @@ const App = () => {
         localStorage.setItem('user', JSON.stringify(user))
 
         // Asynchronously sync the username and avatar from the Postgres DB
-        fetch('http://localhost:3000/api/user/stats', {
+        fetch(`${API_BASE}/api/user/stats`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
           }
@@ -96,19 +97,6 @@ const App = () => {
                     avatar_url: userObj.avatar_url
                   }
                 }).catch(e => console.error('Failed to sync auth metadata', e))
-                
-                // Force a state update to trigger UI re-renders across components
-                setSessionState((prev: any) => prev ? { 
-                  ...prev, 
-                  user: { 
-                    ...prev.user, 
-                    user_metadata: { 
-                      ...prev.user.user_metadata, 
-                      username: userObj.username, 
-                      avatar_url: userObj.avatar_url 
-                    } 
-                  } 
-                } : prev)
               }
             }
           })

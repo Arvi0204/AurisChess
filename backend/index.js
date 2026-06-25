@@ -14,10 +14,8 @@ app.use(express.json()); // parse JSON request bodies
 const db = require('./config/db');
 
 // --- Routes ---
-const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const voiceRoutes = require('./routes/voice');
-app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/voice', voiceRoutes);
 

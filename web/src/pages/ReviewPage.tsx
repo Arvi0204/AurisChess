@@ -217,6 +217,8 @@ const ReviewPage = () => {
   const [gameFen, setGameFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
   const [fenHistory, setFenHistory] = useState<string[]>([])
   const [moves, setMoves] = useState<string[]>([])
+  // Pre-computed from/to squares for each move (index i = move i, 1-based)
+  const [moveSquares, setMoveSquares] = useState<Array<{ from: string; to: string }>>([])
   const [copied, setCopied] = useState(false)
 
   // Stockfish analysis state
@@ -269,19 +271,23 @@ const ReviewPage = () => {
     try {
       const chess = new Chess()
       chess.loadPgn(game.pgn)
-      const history = chess.history()
+      const history = chess.history({ verbose: true }) as any[]
+      const sanHistory = chess.history()
 
-      // Replay from start to collect all FENs
+      // Replay from start to collect all FENs and move squares
       const chess2 = new Chess()
       const fens = [chess2.fen()]
-      for (const san of history) {
-        chess2.move(san)
+      const squares: Array<{ from: string; to: string }> = []
+      for (const m of history) {
+        squares.push({ from: m.from, to: m.to })
+        chess2.move(m.san)
         fens.push(chess2.fen())
       }
 
       setFenHistory(fens)
-      setMoves(history)
-      const lastIdx = history.length
+      setMoveSquares(squares)
+      setMoves(sanHistory)
+      const lastIdx = sanHistory.length
       setCurrentIndex(lastIdx)
       setGameFen(fens[lastIdx])
     } catch (err) {
@@ -528,34 +534,21 @@ const ReviewPage = () => {
     )
   }
 
-  let whiteName = game.white_username || 'White'
-  let blackName = game.black_username || (isEngine ? 'Stockfish AI' : 'Black')
+  const whiteName = game.white_username || 'White'
+  const blackName = game.black_username || (isEngine ? 'Stockfish AI' : 'Black')
 
-  let outcome: 'win' | 'loss' | 'draw' = 'draw'
-  if (game.result !== 'draw') {
-    outcome = (game.result === 'white') === isUserWhite ? 'win' : 'loss'
-  }
+  const outcome: 'win' | 'loss' | 'draw' = game.result === 'draw'
+    ? 'draw'
+    : (game.result === 'white') === isUserWhite ? 'win' : 'loss'
 
-  // Compute last move highlight by diffing consecutive FENs
-  let lastMoveSquares: Record<string, React.CSSProperties> = {}
-  if (currentIndex > 0 && fenHistory[currentIndex - 1] && fenHistory[currentIndex]) {
-    try {
-      const prevChess = new Chess(fenHistory[currentIndex - 1])
-      const prevMoves = prevChess.moves({ verbose: true }) as any[]
-      // Find which move transitions fenHistory[idx-1] → fenHistory[idx]
-      for (const m of prevMoves) {
-        const testChess = new Chess(fenHistory[currentIndex - 1])
-        testChess.move(m)
-        if (testChess.fen().split(' ')[0] === fenHistory[currentIndex].split(' ')[0]) {
-          lastMoveSquares = {
-            [m.from]: { backgroundColor: 'rgba(247, 247, 105, 0.4)' },
-            [m.to]: { backgroundColor: 'rgba(247, 247, 105, 0.4)' },
-          }
-          break
-        }
+  // Use precomputed move squares for last-move highlight — O(1) per render
+  const lastMoveSquare = currentIndex > 0 ? moveSquares[currentIndex - 1] : null
+  const lastMoveSquares: Record<string, React.CSSProperties> = lastMoveSquare
+    ? {
+        [lastMoveSquare.from]: { backgroundColor: 'rgba(247, 247, 105, 0.4)' },
+        [lastMoveSquare.to]:   { backgroundColor: 'rgba(247, 247, 105, 0.4)' },
       }
-    } catch { /* ignore */ }
-  }
+    : {}
 
   const kingSquare = getKingSquareInCheck(gameFen)
   const squareStyles: Record<string, React.CSSProperties> = {

@@ -13,6 +13,7 @@ import PageHeader from '../components/dashboard/PageHeader'
 import ProfileStatsTab from '../components/profile/ProfileStatsTab'
 import ProfileSettingsTab from '../components/profile/ProfileSettingsTab'
 import { supabase } from '../config/supabaseClient'
+import { API_BASE } from '../config/api'
 
 type HistoryPoint = {
   rating: number
@@ -85,7 +86,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem('authToken')
       if (!token) throw new Error('No authentication token found.')
 
-      const response = await fetch('http://localhost:3000/api/user/stats', {
+      const response = await fetch(`${API_BASE}/api/user/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -136,7 +137,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem('authToken')
       if (!token) throw new Error('Unauthorized')
 
-      const response = await fetch('http://localhost:3000/api/user/profile', {
+      const response = await fetch(`${API_BASE}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +230,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem('authToken')
       if (!token) throw new Error('Unauthorized')
 
-      const response = await fetch('http://localhost:3000/api/user/profile', {
+      const response = await fetch(`${API_BASE}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -306,19 +307,19 @@ const ProfilePage = () => {
 
 
   // --- Render Layout ---
+  // Compute display username once per render (avoids IIFE in JSX)
+  const displayUsername = stats?.user.username ?? (() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) return JSON.parse(stored).username || 'Player'
+    } catch { /* ignore */ }
+    return 'Player'
+  })()
+
   return (
     <div className={`dashboard-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>
       <DashboardSidebar
-        username={stats?.user.username || (() => {
-          try {
-            const stored = localStorage.getItem('user')
-            if (stored) {
-              const user = JSON.parse(stored)
-              return user.username || 'Player'
-            }
-          } catch (e) {}
-          return 'Player'
-        })()}
+        username={displayUsername}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
       />

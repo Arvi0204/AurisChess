@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Clock, Gamepad2, Copy, Check, Loader2, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { API_BASE } from '../../config/api'
 
 type GameRecord = {
   id: number
@@ -32,7 +33,7 @@ const RecentGames = () => {
           return
         }
 
-        const response = await fetch('http://localhost:3000/api/user/games', {
+        const response = await fetch(`${API_BASE}/api/user/games`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -43,7 +44,7 @@ const RecentGames = () => {
         }
 
         const resJson = await response.json()
-        setGames((resJson.data.games || []).slice(0, 5))
+        setGames(resJson.data.games || [])
       } catch (err: any) {
         console.error('Error fetching games:', err)
         setError(err.message || 'Error fetching recent games.')

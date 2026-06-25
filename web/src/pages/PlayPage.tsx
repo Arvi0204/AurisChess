@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Bot, EyeOff, Mic, Swords, Users, Loader2, X, Flag, RotateCcw, Eye, Play, RefreshCw } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
@@ -8,7 +8,8 @@ import MoveNavBar from '../components/play/MoveNavBar'
 import BoardWrapper from '../components/play/BoardWrapper'
 import { Chess } from 'chess.js'
 import { useChessVoiceControl } from '../hooks/useChessVoiceControl'
-import { getKingSquareInCheck, formatTime } from '../utils/chessHelpers'
+import { getKingSquareInCheck, formatTime, playChessSound } from '../utils/chessHelpers'
+import { API_BASE } from '../config/api'
 
 import colorWhite from '../assets/color-white.svg'
 import colorRandom from '../assets/color-random.svg'
@@ -38,26 +39,6 @@ const timeControls = [
   },
 ]
 
-const playGameSound = (type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal' | 'resign', volume: number) => {
-  try {
-    const soundPaths = {
-      'move-self': '/sounds/move-self.mp3',
-      'move-opponent': '/sounds/move-opponent.mp3',
-      'capture': '/sounds/capture.mp3',
-      'check': '/sounds/move-check.mp3',
-      'checkmate': '/sounds/game-end.mp3',
-      'resign': '/sounds/game-end.mp3',
-      'illegal': '/sounds/notify.mp3',
-    }
-    const audio = new Audio(soundPaths[type])
-    audio.volume = volume
-    audio.play().catch((err) => {
-      console.warn('Audio playback failed or was blocked:', err)
-    })
-  } catch (err) {
-    console.error('Failed to play sound:', err)
-  }
-};
 
 const PlayPage = () => {
   const [searchParams] = useSearchParams()
@@ -118,38 +99,54 @@ const PlayPage = () => {
   const [showResultModal, setShowResultModal] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  // Sync refs to prevent stale closures in Stockfish worker callbacks
-  const gameModeRef = useRef<'computer' | 'online' | null>(null)
-  useEffect(() => { gameModeRef.current = gameMode }, [gameMode])
+  // Sync all mutable state into a single ref to prevent stale closures
+  // (mirrors the same pattern used in useChessVoiceControl)
+  const stateRef = useRef({
+    gameMode,
+    gameResult,
+    playerColor,
+    selectedLevel,
+    selectedTimeControl,
+    blindfoldMode,
+    playerTime,
+    aiTime,
+  })
+  useEffect(() => {
+    stateRef.current = {
+      gameMode,
+      gameResult,
+      playerColor,
+      selectedLevel,
+      selectedTimeControl,
+      blindfoldMode,
+      playerTime,
+      aiTime,
+    }
+  })
 
-  const gameResultRef = useRef<{ type: 'win' | 'loss' | 'draw'; reason: string } | null>(null)
-  useEffect(() => { gameResultRef.current = gameResult }, [gameResult])
-
-  const playerColorRef = useRef<'white' | 'black'>('white')
-  useEffect(() => { playerColorRef.current = playerColor }, [playerColor])
-
-  const selectedLevelRef = useRef<string>('medium')
-  useEffect(() => { selectedLevelRef.current = selectedLevel }, [selectedLevel])
-
+  // Convenience ref proxies — .current always reads through stateRef so async
+  // Stockfish callbacks never capture stale closure values.
+  const gameModeRef            = useRef<'computer' | 'online' | null>(null)
+  const gameResultRef          = useRef<{ type: 'win' | 'loss' | 'draw'; reason: string } | null>(null)
+  const playerColorRef         = useRef<'white' | 'black'>('white')
+  const selectedLevelRef       = useRef<string>('medium')
   const selectedTimeControlRef = useRef<string>('rapid-10-0')
-  useEffect(() => { selectedTimeControlRef.current = selectedTimeControl }, [selectedTimeControl])
-
-  const blindfoldModeRef = useRef<boolean>(false)
-  useEffect(() => { blindfoldModeRef.current = blindfoldMode }, [blindfoldMode])
-
-  const playerTimeRef = useRef<number>(600)
-  useEffect(() => { playerTimeRef.current = playerTime }, [playerTime])
-
-  const aiTimeRef = useRef<number>(600)
-  useEffect(() => { aiTimeRef.current = aiTime }, [aiTime])
+  const blindfoldModeRef       = useRef<boolean>(false)
+  const playerTimeRef          = useRef<number>(600)
+  const aiTimeRef              = useRef<number>(600)
+  // Keep proxy refs in sync via the single combined stateRef update effect above
+  gameModeRef.current            = stateRef.current.gameMode
+  gameResultRef.current          = stateRef.current.gameResult
+  playerColorRef.current         = stateRef.current.playerColor
+  selectedLevelRef.current       = stateRef.current.selectedLevel
+  selectedTimeControlRef.current = stateRef.current.selectedTimeControl
+  blindfoldModeRef.current       = stateRef.current.blindfoldMode
+  playerTimeRef.current          = stateRef.current.playerTime
+  aiTimeRef.current              = stateRef.current.aiTime
 
   // Auto-manage showResultModal based on gameResult
   useEffect(() => {
-    if (gameResult) {
-      setShowResultModal(true)
-    } else {
-      setShowResultModal(false)
-    }
+    setShowResultModal(!!gameResult)
   }, [gameResult])
 
   const updatePgnHeaders = () => {
@@ -198,7 +195,7 @@ const PlayPage = () => {
       updatePgnHeaders()
       const pgn = gameRef.current.pgn()
 
-      await fetch('http://localhost:3000/api/user/game-end-engine', {
+      await fetch(`${API_BASE}/api/user/game-end-engine`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -220,17 +217,11 @@ const PlayPage = () => {
   // Save game to database automatically when game ends
   useEffect(() => {
     if (gameResult && gameMode === 'computer') {
-      const totalMoves = totalMovesRef.current
-      if (totalMoves >= 2) {
+      if (totalMovesRef.current >= 2) {
         saveEngineGameToDb()
-        try {
-          localStorage.removeItem('activeEngineGame')
-        } catch (e) {}
-      } else {
-        try {
-          localStorage.removeItem('activeEngineGame')
-        } catch (e) {}
       }
+      // Always clean up localStorage when the game ends
+      try { localStorage.removeItem('activeEngineGame') } catch { /* ignore */ }
     }
   }, [gameResult, gameMode])
 
@@ -301,20 +292,17 @@ const PlayPage = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [gameStarted, fenHistory])
 
-  let username = 'Player'
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const user = JSON.parse(stored)
-      username = user.username || 'Player'
-    }
-  } catch {
-    // fallback to default
-  }
+  const username = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) return JSON.parse(stored).username || 'Player'
+    } catch { /* ignore */ }
+    return 'Player'
+  }, [])
 
   // Timer for Matchmaking
   useEffect(() => {
-    let timerId: any
+    let timerId: ReturnType<typeof setInterval> | undefined
     if (isSearching) {
       timerId = setInterval(() => {
         setSearchTime((prev) => prev + 1)
@@ -325,88 +313,23 @@ const PlayPage = () => {
     return () => clearInterval(timerId)
   }, [isSearching])
 
-  // Progress simulation for Engine Initialization
+  // ── Effect 1: UI-only progress bar animation ──────────────────────────────
+  // Drives the fake loading bar. Resets when initializing stops.
   useEffect(() => {
-    let progressId: any
+    let progressId: ReturnType<typeof setInterval> | undefined
     if (isInitializingEngine) {
       progressId = setInterval(() => {
         setEngineLoadProgress((prev) => {
           if (prev >= 100) {
             clearInterval(progressId)
             setEngineStatusText('Engine Ready! Good Luck.')
-            setTimeout(() => {
-              setIsInitializingEngine(false)
-              setEngineLoadProgress(0)
-              
-              // Initialize active game state
-              gameRef.current = new Chess()
-              const initialFen = gameRef.current.fen()
-              setGameFen(initialFen)
-              setFenHistory([initialFen])
-              setCurrentMoveIndex(0)
-              
-              const tcOptions = {
-                'rapid-10-0': 600,
-                'rapid-15-10': 900,
-                'blitz-5-0': 300,
-              }
-              const timeLimit = tcOptions[selectedTimeControl as keyof typeof tcOptions] || 600
-              setPlayerTime(timeLimit)
-              setAiTime(timeLimit)
-              
-              // Determine player's color
-              let assignedColor: 'white' | 'black' = 'white'
-              if (selectedEngineColor === 'random') {
-                assignedColor = Math.random() < 0.5 ? 'white' : 'black'
-              } else {
-                assignedColor = selectedEngineColor
-              }
-
-              setPlayerColor(assignedColor)
-              setGameResult(null)
-              setManualPremove(null)
-              setSelectedSquare(null)
-              setGameStarted(true)
-              setGameMode('computer')
-              totalMovesRef.current = 0
-              blindfoldMovesRef.current = 0
-              initStockfish()
-              setIsVoiceActive(true)
-              setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
-
-              // Save initial state to localStorage
-              try {
-                const gameData = {
-                  playerColor: assignedColor,
-                  selectedLevel,
-                  selectedTimeControl,
-                  fen: initialFen,
-                  fenHistory: [initialFen],
-                  pgn: '',
-                  blindfoldMode: false,
-                  totalMoves: 0,
-                  blindfoldMoves: 0,
-                  playerTime: timeLimit,
-                  aiTime: timeLimit
-                }
-                localStorage.setItem('activeEngineGame', JSON.stringify(gameData))
-              } catch (err) {
-                console.error('Failed to save initial engine game to localStorage:', err)
-              }
-            }, 1000)
             return 100
           }
           const next = prev + Math.floor(Math.random() * 12) + 12
           const clamped = Math.min(next, 100)
-          
-          if (clamped < 35) {
-            setEngineStatusText('Loading opening book databases...')
-          } else if (clamped < 70) {
-            setEngineStatusText('Initializing transposition tables...')
-          } else if (clamped < 100) {
-            setEngineStatusText('Calibrating neural networks...')
-          }
-          
+          if (clamped < 35) setEngineStatusText('Loading opening book databases...')
+          else if (clamped < 70) setEngineStatusText('Initializing transposition tables...')
+          else if (clamped < 100) setEngineStatusText('Calibrating neural networks...')
           return clamped
         })
       }, 200)
@@ -415,7 +338,72 @@ const PlayPage = () => {
       setEngineStatusText('Spinning up neural networks...')
     }
     return () => clearInterval(progressId)
-  }, [isInitializingEngine, selectedTimeControl])
+  }, [isInitializingEngine])
+
+  // ── Effect 2: Launch the actual game once progress hits 100% ──────────────
+  // Separated from the animation so each effect has a single responsibility.
+  useEffect(() => {
+    if (!isInitializingEngine || engineLoadProgress < 100) return
+
+    const timer = setTimeout(() => {
+      setIsInitializingEngine(false)
+      setEngineLoadProgress(0)
+
+      // Initialize active game state
+      gameRef.current = new Chess()
+      const initialFen = gameRef.current.fen()
+      setGameFen(initialFen)
+      setFenHistory([initialFen])
+      setCurrentMoveIndex(0)
+
+      const tcOptions = {
+        'rapid-10-0': 600,
+        'rapid-15-10': 900,
+        'blitz-5-0': 300,
+      }
+      const timeLimit = tcOptions[selectedTimeControl as keyof typeof tcOptions] || 600
+      setPlayerTime(timeLimit)
+      setAiTime(timeLimit)
+
+      // Determine player's color
+      const assignedColor: 'white' | 'black' = selectedEngineColor === 'random'
+        ? (Math.random() < 0.5 ? 'white' : 'black')
+        : selectedEngineColor
+
+      setPlayerColor(assignedColor)
+      setGameResult(null)
+      setManualPremove(null)
+      setSelectedSquare(null)
+      setGameStarted(true)
+      setGameMode('computer')
+      totalMovesRef.current = 0
+      blindfoldMovesRef.current = 0
+      initStockfish()
+      setIsVoiceActive(true)
+      setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
+
+      // Save initial state to localStorage
+      try {
+        localStorage.setItem('activeEngineGame', JSON.stringify({
+          playerColor: assignedColor,
+          selectedLevel,
+          selectedTimeControl,
+          fen: initialFen,
+          fenHistory: [initialFen],
+          pgn: '',
+          blindfoldMode: false,
+          totalMoves: 0,
+          blindfoldMoves: 0,
+          playerTime: timeLimit,
+          aiTime: timeLimit
+        }))
+      } catch (err) {
+        console.error('Failed to save initial engine game to localStorage:', err)
+      }
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [isInitializingEngine, engineLoadProgress, selectedTimeControl, selectedEngineColor, selectedLevel])
 
   // Initialize and manage Stockfish engine
   const initStockfish = () => {
@@ -451,7 +439,6 @@ const PlayPage = () => {
       const move = gameRef.current.move({ from, to, promotion })
       if (move) {
         updateGameStateAfterMove()
-        checkGameStatus()
 
         // After computer moves, execute queued manual premove if valid
         const queuedPremove = manualPremoveRef.current
@@ -479,6 +466,7 @@ const PlayPage = () => {
             setCurrentMoveIndex(latestIndex)
           }
         }
+        // Check game status once after all moves (engine + any premove) are applied
         checkGameStatus()
       }
     } catch (e) {
@@ -568,7 +556,7 @@ const PlayPage = () => {
 
   // Clock Countdown logic (only for multiplayer / online mode)
   useEffect(() => {
-    let clockInterval: any
+    let clockInterval: ReturnType<typeof setInterval> | undefined
     if (gameStarted && !gameResult && gameMode === 'online') {
       clockInterval = setInterval(() => {
         const turn = gameRef.current.turn() // 'w' or 'b'
@@ -649,20 +637,20 @@ const PlayPage = () => {
     const lastPlayedMove = history[history.length - 1];
 
     if (game.isCheckmate()) {
-      playGameSound('checkmate', volume);
+      playChessSound('checkmate', volume);
     } else if (game.inCheck()) {
-      playGameSound('check', volume);
+      playChessSound('check', volume);
     } else if (lastPlayedMove && lastPlayedMove.captured) {
-      playGameSound('capture', volume);
+      playChessSound('capture', volume);
     } else {
       const justMovedColor = game.turn() === 'w' ? 'black' : 'white'
       const isSelfMove = justMovedColor === playerColor
-      playGameSound(isSelfMove ? 'move-self' : 'move-opponent', volume)
+      playChessSound(isSelfMove ? 'move-self' : 'move-opponent', volume)
     }
   }
 
   // Local chess mechanics and move handlers
-  const makeMove = (moveObj: any) => {
+  const makeMove = useCallback((moveObj: any) => {
     try {
       const move = gameRef.current.move(moveObj)
       if (move) {
@@ -676,13 +664,14 @@ const PlayPage = () => {
       return null
     }
     return null
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volume])
 
-  const checkGameStatus = () => {
+  const checkGameStatus = useCallback(() => {
     const game = gameRef.current
     if (game.isCheckmate()) {
       const turn = game.turn()
-      const playerIsWhite = playerColor === 'white'
+      const playerIsWhite = playerColorRef.current === 'white'
       const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
       setGameResult({
         type: isPlayerTurn ? 'loss' : 'win',
@@ -695,16 +684,16 @@ const PlayPage = () => {
       else if (game.isInsufficientMaterial()) reason = 'Insufficient material'
       setGameResult({ type: 'draw', reason })
     }
-  }
+  }, [])
 
-  const onDrop = ({ piece, sourceSquare, targetSquare }: { piece: any; sourceSquare: string; targetSquare: string | null }) => {
-    if (gameResult || !targetSquare) return false
+  const onDrop = useCallback(({ piece, sourceSquare, targetSquare }: { piece: any; sourceSquare: string; targetSquare: string | null }) => {
+    if (gameResultRef.current || !targetSquare) return false
 
     const isAtLatest = currentMoveIndex === gameRef.current.history().length
     if (!isAtLatest) return false
 
     const turn = gameRef.current.turn()
-    const playerIsWhite = playerColor === 'white'
+    const playerIsWhite = playerColorRef.current === 'white'
     const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
 
     if (isPlayerTurn) {
@@ -714,28 +703,29 @@ const PlayPage = () => {
         promotion: 'q'
       })
       if (!move) {
-        playGameSound('illegal', volume)
+        playChessSound('illegal', volume)
       }
       return !!move
     }
     
     // Opponent's turn: manual premove queue
     const pieceType = piece?.pieceType
-    const playerColorChar = playerColor === 'white' ? 'w' : 'b'
+    const playerColorChar = playerColorRef.current === 'white' ? 'w' : 'b'
     if (pieceType && pieceType[0] === playerColorChar) {
       setManualPremove({ from: sourceSquare, to: targetSquare })
     }
     return false // snap back, premove highlights will be displayed
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMoveIndex, volume, makeMove])
 
-  const onSquareClick = ({ square }: { piece?: any; square: string }) => {
-    if (gameResult) return
+  const onSquareClick = useCallback(({ square }: { piece?: any; square: string }) => {
+    if (gameResultRef.current) return
 
     const isAtLatest = currentMoveIndex === gameRef.current.history().length
     if (!isAtLatest) return
 
     const turn = gameRef.current.turn()
-    const playerIsWhite = playerColor === 'white'
+    const playerIsWhite = playerColorRef.current === 'white'
     const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
 
     if (!isPlayerTurn) {
@@ -747,7 +737,7 @@ const PlayPage = () => {
         setSelectedSquare(null)
       } else {
         const pieceOnSquare = gameRef.current.get(square as any)
-        const userColorChar = playerColor === 'white' ? 'w' : 'b'
+        const userColorChar = playerColorRef.current === 'white' ? 'w' : 'b'
         if (pieceOnSquare && pieceOnSquare.color === userColorChar) {
           setSelectedSquare(square)
         }
@@ -772,22 +762,23 @@ const PlayPage = () => {
         setSelectedSquare(null)
       } else {
         const pieceOnSquare = gameRef.current.get(square as any)
-        const userColorChar = playerColor === 'white' ? 'w' : 'b'
+        const userColorChar = playerColorRef.current === 'white' ? 'w' : 'b'
         if (pieceOnSquare && pieceOnSquare.color === userColorChar) {
           setSelectedSquare(square)
         } else {
           setSelectedSquare(null)
-          playGameSound('illegal', volume)
+          playChessSound('illegal', volume)
         }
       }
     } else {
       const pieceOnSquare = gameRef.current.get(square as any)
-      const userColorChar = playerColor === 'white' ? 'w' : 'b'
+      const userColorChar = playerColorRef.current === 'white' ? 'w' : 'b'
       if (pieceOnSquare && pieceOnSquare.color === userColorChar) {
         setSelectedSquare(square)
       }
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMoveIndex, selectedSquare, volume, makeMove])
 
   const undoLastTurn = () => {
     if (gameRef.current.history().length >= 2) {
@@ -830,7 +821,7 @@ const PlayPage = () => {
   const handleResign = () => {
     setGameResult({ type: 'loss', reason: 'Resigned' })
     setShowResignConfirm(false)
-    playGameSound('resign', volume)
+    playChessSound('resign', volume)
   }
 
   const resetGame = () => {
@@ -883,6 +874,11 @@ const PlayPage = () => {
     }
   }, [gameResult])
 
+  // Compute isPlayerTurn for voice hook and render (must be before useChessVoiceControl)
+  const turn = gameRef.current.turn()
+  const playerIsWhite = playerColor === 'white'
+  const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
+
   useChessVoiceControl({
     game: gameRef.current,
     makeMove,
@@ -891,11 +887,7 @@ const PlayPage = () => {
     showResignConfirm,
     handleResign,
     isVoiceActive,
-    isPlayerTurn: (() => {
-      const t = gameRef.current.turn()
-      const piw = playerColor === 'white'
-      return (t === 'w' && piw) || (t === 'b' && !piw)
-    })(),
+    isPlayerTurn,
     setVoiceStatus,
     volume,
     gameResult,
@@ -925,9 +917,7 @@ const PlayPage = () => {
     .flatMap((g) => g.options)
     .find((o) => o.id === selectedTimeControl)
 
-  const turn = gameRef.current.turn()
-  const playerIsWhite = playerColor === 'white'
-  const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
+
 
   const possibleMoves = (selectedSquare && isPlayerTurn)
     ? (gameRef.current.moves({ square: selectedSquare as any, verbose: true }) as any[])

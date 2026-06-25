@@ -26,7 +26,8 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
   const tmpPath = path.join(os.tmpdir(), `chess_voice_${Date.now()}.webm`);
 
   try {
-    fs.writeFileSync(tmpPath, req.file.buffer);
+    // Use async write to avoid blocking the Node.js event loop
+    await fs.promises.writeFile(tmpPath, req.file.buffer);
 
     const transcription = await groq.audio.transcriptions.create({
       file: fs.createReadStream(tmpPath),
