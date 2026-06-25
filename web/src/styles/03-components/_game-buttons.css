@@ -77,6 +77,18 @@
   box-shadow: 0 0 12px rgba(255, 185, 91, 0.25);
 }
 
+.game-control-btn--flip {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+  background: var(--color-white-overlay-03);
+}
+
+.game-control-btn--flip:hover:not(:disabled) {
+  background: var(--color-white-overlay-08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
 .game-control-btn--resign-yes {
   border: 1px solid rgba(255, 100, 80, 0.25);
   color: #ff6450;

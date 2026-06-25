@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: 14px 10px;
+  padding: clamp(8px, 1.2vh, 14px) 10px;
   border: 1px solid var(--color-white-overlay-06);
   border-radius: 12px;
   background: var(--color-white-overlay-03);
@@ -50,7 +50,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   flex: 1;
-  padding: 16px 14px;
+  padding: clamp(10px, 1.5vh, 16px) 14px;
   border: 1px solid var(--color-white-overlay-06);
   border-radius: 12px;
   background: var(--color-white-overlay-03);
@@ -100,8 +100,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 48px;
-  padding: 12px clamp(24px, 3vw, 36px);
+  min-height: clamp(40px, 5.5vh, 48px);
+  padding: clamp(8px, 1.2vh, 12px) clamp(24px, 3vw, 36px);
   border: none;
   border-radius: 12px;
   font: inherit;

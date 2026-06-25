@@ -283,17 +283,15 @@
 .game-buttons-layout {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  height: 92px;
 }
 
 .resign-confirm-block {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  height: 92px;
   position: relative;
   z-index: 10;
 }

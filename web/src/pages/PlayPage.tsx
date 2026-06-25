@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, Check } from 'lucide-react'
+import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, Check, RefreshCw } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
@@ -92,8 +92,16 @@ const PlayPage = () => {
   const [fenHistory, setFenHistory] = useState<string[]>(['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'])
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0)
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white')
+  const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white')
+
+  useEffect(() => {
+    setBoardOrientation(playerColor)
+  }, [playerColor])
+
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [manualPremove, setManualPremove] = useState<{ from: string; to: string } | null>(null)
+  const manualPremoveRef = useRef<{ from: string; to: string } | null>(null)
+  useEffect(() => { manualPremoveRef.current = manualPremove }, [manualPremove])
   
   // Game clock states (simulated for UI)
   const [playerTime, setPlayerTime] = useState(600)
@@ -450,18 +458,30 @@ const PlayPage = () => {
         checkGameStatus()
 
         // After computer moves, execute queued manual premove if valid
-        if (manualPremove) {
+        const queuedPremove = manualPremoveRef.current
+        if (queuedPremove) {
+          let premoveSucceeded = false
           try {
             gameRef.current.move({
-              from: manualPremove.from,
-              to: manualPremove.to,
+              from: queuedPremove.from,
+              to: queuedPremove.to,
               promotion: 'q'
             })
+            premoveSucceeded = true
             updateGameStateAfterMove()
           } catch (e) {
             // Illegal premove, discard silently
           }
           setManualPremove(null)
+          // React batches state: prev move-index update hasn't committed yet,
+          // so updateGameStateAfterMove's isAtEnd check sees stale prev.
+          // Force-sync the board to the actual latest position.
+          if (premoveSucceeded) {
+            const latestFen = gameRef.current.fen()
+            const latestIndex = gameRef.current.history().length
+            setGameFen(latestFen)
+            setCurrentMoveIndex(latestIndex)
+          }
         }
         checkGameStatus()
       }
@@ -1001,30 +1021,51 @@ const PlayPage = () => {
             <section className="board-section">
               <div className="board-container">
                 
-                {/* AI / Opponent Info Bar */}
-                <div className="player-info-bar">
-                  <div className="player-info-details">
-                    <div className="player-avatar player-avatar--ai">
-                      <Bot size={18} />
+                {/* Top Player Info Bar */}
+                {boardOrientation === playerColor ? (
+                  /* Opponent (AI) at the top */
+                  <div className="player-info-bar">
+                    <div className="player-info-details">
+                      <div className="player-avatar player-avatar--ai">
+                        <Bot size={18} />
+                      </div>
+                      <div className="player-name-container">
+                        <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
+                        <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
+                      </div>
                     </div>
-                    <div className="player-name-container">
-                      <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
-                      <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
-                    </div>
+                    {gameMode === 'online' && (
+                      <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
+                        {formatTime(aiTime)}
+                      </div>
+                    )}
                   </div>
-                  {gameMode === 'online' && (
-                    <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
-                      {formatTime(aiTime)}
+                ) : (
+                  /* Player (User) at the top */
+                  <div className="player-info-bar">
+                    <div className="player-info-details">
+                      <div className="player-avatar player-avatar--user">
+                        <User size={18} />
+                      </div>
+                      <div className="player-name-container">
+                        <span className="player-name">{username}</span>
+                        <span className="player-elo">Player</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    {gameMode === 'online' && (
+                      <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
+                        {formatTime(playerTime)}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* The Chessboard Wrapper */}
                 <div className="board-wrapper">
                   <Chessboard
                     options={{
                       position: gameFen,
-                      boardOrientation: playerColor,
+                      boardOrientation: boardOrientation,
                       allowDragging: !gameResult && (currentMoveIndex === gameRef.current.history().length),
                       onPieceDrop: onDrop,
                       onSquareClick: onSquareClick,
@@ -1063,23 +1104,44 @@ const PlayPage = () => {
                   )}
                 </div>
 
-                {/* Player Info Bar */}
-                <div className="player-info-bar">
-                  <div className="player-info-details">
-                    <div className="player-avatar player-avatar--user">
-                      <User size={18} />
+                {/* Bottom Player Info Bar */}
+                {boardOrientation === playerColor ? (
+                  /* Player (User) at the bottom */
+                  <div className="player-info-bar">
+                    <div className="player-info-details">
+                      <div className="player-avatar player-avatar--user">
+                        <User size={18} />
+                      </div>
+                      <div className="player-name-container">
+                        <span className="player-name">{username}</span>
+                        <span className="player-elo">Player</span>
+                      </div>
                     </div>
-                    <div className="player-name-container">
-                      <span className="player-name">{username}</span>
-                      <span className="player-elo">Player</span>
-                    </div>
+                    {gameMode === 'online' && (
+                      <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
+                        {formatTime(playerTime)}
+                      </div>
+                    )}
                   </div>
-                  {gameMode === 'online' && (
-                    <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
-                      {formatTime(playerTime)}
+                ) : (
+                  /* Opponent (AI) at the bottom */
+                  <div className="player-info-bar">
+                    <div className="player-info-details">
+                      <div className="player-avatar player-avatar--ai">
+                        <Bot size={18} />
+                      </div>
+                      <div className="player-name-container">
+                        <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
+                        <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    {gameMode === 'online' && (
+                      <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
+                        {formatTime(aiTime)}
+                      </div>
+                    )}
+                  </div>
+                )}
 
               </div>
             </section>
@@ -1256,6 +1318,16 @@ const PlayPage = () => {
                         View Result
                       </button>
                     </div>
+                    <button 
+                      className="game-control-btn game-control-btn--flip" 
+                      onClick={() => {
+                        setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
+                      }}
+                      style={{ marginTop: '4px', width: '100%' }}
+                    >
+                      <RefreshCw size={14} />
+                      Flip Board
+                    </button>
                   </div>
                 ) : !showResignConfirm ? (
                   <div className="game-buttons-layout animate-fade-in">
@@ -1278,26 +1350,39 @@ const PlayPage = () => {
                       </button>
                     </div>
 
-                    <button 
-                      className={`game-control-btn game-control-btn--blindfold ${blindfoldMode ? 'game-control-btn--blindfold-active' : ''}`}
-                      onClick={() => {
-                        const nextBlindfold = !blindfoldMode
-                        setBlindfoldMode(nextBlindfold)
-                        if (gameMode === 'computer' && !gameResult) {
-                          try {
-                            const saved = localStorage.getItem('activeEngineGame')
-                            if (saved) {
-                              const data = JSON.parse(saved)
-                              data.blindfoldMode = nextBlindfold
-                              localStorage.setItem('activeEngineGame', JSON.stringify(data))
-                            }
-                          } catch (e) {}
-                        }
-                      }}
-                    >
-                      {blindfoldMode ? <Eye size={14} /> : <EyeOff size={14} />}
-                      {blindfoldMode ? 'Show Pieces' : 'Blindfold Mode'}
-                    </button>
+                    <div className="control-btn-grid" style={{ marginTop: '4px' }}>
+                      <button 
+                        className={`game-control-btn game-control-btn--blindfold ${blindfoldMode ? 'game-control-btn--blindfold-active' : ''}`}
+                        onClick={() => {
+                          const nextBlindfold = !blindfoldMode
+                          setBlindfoldMode(nextBlindfold)
+                          if (gameMode === 'computer' && !gameResult) {
+                            try {
+                              const saved = localStorage.getItem('activeEngineGame')
+                              if (saved) {
+                                const data = JSON.parse(saved)
+                                data.blindfoldMode = nextBlindfold
+                                localStorage.setItem('activeEngineGame', JSON.stringify(data))
+                              }
+                            } catch (e) {}
+                          }
+                        }}
+                      >
+                        {blindfoldMode ? <Eye size={14} /> : <EyeOff size={14} />}
+                        {blindfoldMode ? 'Show Pieces' : 'Blindfold'}
+                      </button>
+
+                      <button 
+                        className="game-control-btn game-control-btn--flip" 
+                        onClick={() => {
+                          setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
+                        }}
+                        title="Flip board view"
+                      >
+                        <RefreshCw size={14} />
+                        Flip Board
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="resign-confirm-block animate-fade-in">
