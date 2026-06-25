@@ -1,0 +1,405 @@
+/* ============================================================
+   Learn Page – Layout
+   ============================================================ */
+.learn-page-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding: 0 clamp(16px, 3vw, 32px) clamp(32px, 5vw, 56px);
+}
+
+/* ============================================================
+   Explore Card
+   ============================================================ */
+.learn-explore-card {
+  position: relative;
+  border: 1px solid var(--color-cyan-border);
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(23, 32, 40, 0.85) 0%,
+    rgba(12, 17, 22, 0.9) 60%,
+    rgba(0, 20, 35, 0.7) 100%
+  );
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(128, 207, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  transition: box-shadow 350ms var(--transition-bezier), border-color 350ms ease;
+}
+
+.learn-explore-card:hover {
+  border-color: rgba(128, 207, 255, 0.28);
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.45),
+    0 0 36px rgba(128, 207, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.learn-explore-card__glow {
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(128, 207, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.learn-explore-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 4vw, 40px);
+  padding: clamp(24px, 4vw, 40px);
+  flex-wrap: wrap;
+}
+
+.learn-explore-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: rgba(128, 207, 255, 0.08);
+  border: 1px solid rgba(128, 207, 255, 0.18);
+  color: var(--color-cyan);
+  box-shadow: 0 0 24px rgba(128, 207, 255, 0.1);
+}
+
+.learn-explore-card__copy {
+  flex: 1;
+  min-width: 200px;
+}
+
+.learn-explore-card__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-cyan);
+  background: rgba(128, 207, 255, 0.08);
+  border: 1px solid rgba(128, 207, 255, 0.15);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.learn-explore-card__copy h2 {
+  margin: 0 0 8px;
+  color: var(--color-text);
+  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-weight: 800;
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.learn-explore-card__copy p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  max-width: 520px;
+}
+
+.learn-explore-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 13px 26px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(128, 207, 255, 0.12), rgba(128, 207, 255, 0.06));
+  border: 1px solid rgba(128, 207, 255, 0.2);
+  color: var(--color-cyan);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: not-allowed;
+  opacity: 0.55;
+  transition: all 250ms ease;
+}
+
+/* Decorative chess pieces */
+.learn-explore-card__decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 160px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.learn-explore-card__piece {
+  position: absolute;
+  font-size: 4rem;
+  opacity: 0.04;
+  color: var(--color-cyan);
+  user-select: none;
+  line-height: 1;
+}
+
+.learn-explore-card__piece:nth-child(1) {
+  top: -10px;
+  right: 20px;
+  font-size: 5.5rem;
+  opacity: 0.05;
+}
+
+.learn-explore-card__piece--2 {
+  bottom: -10px;
+  right: 60px;
+  font-size: 3.5rem;
+  opacity: 0.04;
+}
+
+.learn-explore-card__piece--3 {
+  top: 50%;
+  right: -10px;
+  transform: translateY(-50%);
+  font-size: 4rem;
+  opacity: 0.03;
+}
+
+/* ============================================================
+   History Section
+   ============================================================ */
+.learn-history {
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.learn-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 22px clamp(20px, 3vw, 32px);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.learn-history__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.learn-history__title svg {
+  color: var(--color-cyan);
+}
+
+.learn-history__title h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.learn-history__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(128, 207, 255, 0.08);
+  border: 1px solid rgba(128, 207, 255, 0.12);
+  color: var(--color-cyan);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+/* Filters */
+.learn-history__filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.learn-history__filter-icon {
+  color: var(--color-muted-low);
+  margin-right: 2px;
+}
+
+.learn-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  white-space: nowrap;
+}
+
+.learn-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text);
+}
+
+.learn-filter-pill--active {
+  background: rgba(128, 207, 255, 0.1);
+  border-color: rgba(128, 207, 255, 0.25);
+  color: var(--color-cyan);
+}
+
+.learn-filter-pill--active:hover {
+  background: rgba(128, 207, 255, 0.15);
+}
+
+/* History list reuses recent-game-item styles from _dashboard-stats.css */
+.learn-history__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.learn-history__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(48px, 8vw, 80px) 24px;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.learn-history__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-soft);
+  color: var(--color-muted-low);
+  margin-bottom: 4px;
+}
+
+.learn-history__empty h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+}
+
+.learn-history__empty p {
+  margin: 0;
+  font-size: 0.88rem;
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+.learn-history__spinner {
+  color: var(--color-cyan);
+  animation: spin 1.4s linear infinite;
+}
+
+/* ============================================================
+   Dashboard RecentGames – Footer "View Full History" button
+   ============================================================ */
+.recent-games__footer {
+  display: flex;
+  justify-content: center;
+  padding: 18px clamp(20px, 3vw, 28px);
+  border-top: 1px solid var(--border-soft);
+}
+
+.recent-games__view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: rgba(128, 207, 255, 0.06);
+  border: 1px solid rgba(128, 207, 255, 0.15);
+  color: var(--color-cyan);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 220ms ease;
+  text-decoration: none;
+}
+
+.recent-games__view-all-btn:hover {
+  background: rgba(128, 207, 255, 0.12);
+  border-color: rgba(128, 207, 255, 0.28);
+  color: var(--color-text);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(128, 207, 255, 0.1);
+}
+
+/* ============================================================
+   Game History Pagination
+   ============================================================ */
+.learn-history__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px clamp(20px, 3vw, 32px);
+  border-top: 1px solid var(--border-soft);
+  background: rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.learn-pagination__info {
+  font-size: 0.8rem;
+  color: var(--color-muted-low);
+  font-weight: 500;
+}
+
+.learn-pagination__info span {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.learn-pagination__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.learn-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+  user-select: none;
+}
+
+.learn-pagination__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text);
+}
+
+.learn-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.01);
+  border-color: rgba(255, 255, 255, 0.03);
+  color: var(--color-muted-low);
+}

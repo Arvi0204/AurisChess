@@ -17,7 +17,7 @@ import { supabase } from '../../config/supabaseClient'
 const navItems = [
   { icon: Home, label: 'Home', href: '/dashboard' },
   { icon: Swords, label: 'Play', href: '/play' },
-  { icon: BookOpen, label: 'Learn', href: '#learn' },
+  { icon: BookOpen, label: 'Learn', href: '/learn' },
   { icon: Crown, label: 'Leaderboard', href: '#leaderboard' },
 ]
 

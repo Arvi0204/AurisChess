@@ -4,8 +4,10 @@ import { Toaster } from 'react-hot-toast'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
+import LearnPage from './pages/LearnPage'
 import PlayPage from './pages/PlayPage'
 import ProfilePage from './pages/ProfilePage'
+import ReviewPage from './pages/ReviewPage'
 import { supabase } from './config/supabaseClient'
 
 function isLoggedIn(): boolean {
@@ -184,6 +186,22 @@ const App = () => {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learn"
+          element={
+            <ProtectedRoute>
+              <LearnPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/review"
+          element={
+            <ProtectedRoute>
+              <ReviewPage />
             </ProtectedRoute>
           }
         />

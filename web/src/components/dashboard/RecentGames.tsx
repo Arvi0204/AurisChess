@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Clock, Gamepad2, Copy, Check, Loader2 } from 'lucide-react'
+import { Clock, Gamepad2, Copy, Check, Loader2, ArrowRight } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 
 type GameRecord = {
   id: number
@@ -16,6 +17,7 @@ type GameRecord = {
 }
 
 const RecentGames = () => {
+  const navigate = useNavigate()
   const [games, setGames] = useState<GameRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +43,7 @@ const RecentGames = () => {
         }
 
         const resJson = await response.json()
-        setGames(resJson.data.games || [])
+        setGames((resJson.data.games || []).slice(0, 5))
       } catch (err: any) {
         console.error('Error fetching games:', err)
         setError(err.message || 'Error fetching recent games.')
@@ -95,9 +97,9 @@ const RecentGames = () => {
           <Clock size={18} aria-hidden="true" />
           Recent Games
         </h2>
-        <a href="#history" className="recent-games__link">
+        <Link to="/learn" className="recent-games__link">
           View all
-        </a>
+        </Link>
       </div>
 
       {loading ? (
@@ -121,87 +123,104 @@ const RecentGames = () => {
           </a>
         </div>
       ) : (
-        <div className="recent-games__list">
-          {games.map((game) => {
-            const isEngine = game.game_type === 'engine'
-            
-            // Resolve opponent details
-            let opponentName = 'Stockfish AI'
-            let isUserWhite = true
+        <>
+          <div className="recent-games__list">
+            {games.map((game) => {
+              const isEngine = game.game_type === 'engine'
+              
+              // Resolve opponent details
+              let opponentName = 'Stockfish AI'
+              let isUserWhite = true
 
-            if (isEngine) {
-              // For engine games, if user is white, black_player_id is null
-              isUserWhite = game.black_username === null
-            } else {
-              // Multiplayer
-              const isWhite = game.white_email?.toLowerCase() === userEmail.toLowerCase()
-              isUserWhite = isWhite
-              opponentName = isWhite 
-                ? (game.black_username || 'Opponent') 
-                : (game.white_username || 'Opponent')
-            }
-
-            // Determine outcome: Win, Loss, Draw
-            let outcome: 'win' | 'loss' | 'draw' = 'draw'
-            if (game.result !== 'draw') {
-              if (game.result === 'white') {
-                outcome = isUserWhite ? 'win' : 'loss'
+              if (isEngine) {
+                // For engine games, if user is white, black_player_id is null
+                isUserWhite = game.black_username === null
               } else {
-                outcome = isUserWhite ? 'loss' : 'win'
+                // Multiplayer
+                const isWhite = game.white_email?.toLowerCase() === userEmail.toLowerCase()
+                isUserWhite = isWhite
+                opponentName = isWhite 
+                  ? (game.black_username || 'Opponent') 
+                  : (game.white_username || 'Opponent')
               }
-            }
 
-            // Calculate blindfold details
-            const hasBlindfold = isEngine && game.blindfold_moves > 0
-            const blindfoldPercentage = hasBlindfold && game.total_moves > 0
-              ? Math.round((game.blindfold_moves / game.total_moves) * 100)
-              : 0
+              // Determine outcome: Win, Loss, Draw
+              let outcome: 'win' | 'loss' | 'draw' = 'draw'
+              if (game.result !== 'draw') {
+                if (game.result === 'white') {
+                  outcome = isUserWhite ? 'win' : 'loss'
+                } else {
+                  outcome = isUserWhite ? 'loss' : 'win'
+                }
+              }
 
-            return (
-              <div key={game.id} className="recent-game-item">
-                <div className="recent-game-item__left">
-                  <div className="recent-game-item__opponent-info">
-                    <span className="recent-game-item__opponent">
-                      vs {opponentName}
-                    </span>
-                    <div className="recent-game-item__meta">
-                      <span className={`recent-game-item__badge recent-game-item__badge--${game.game_type}`}>
-                        {game.game_type}
+              // Calculate blindfold details
+              const hasBlindfold = isEngine && game.blindfold_moves > 0
+              const blindfoldPercentage = hasBlindfold && game.total_moves > 0
+                ? Math.round((game.blindfold_moves / game.total_moves) * 100)
+                : 0
+
+              return (
+                <div
+                  key={game.id}
+                  className="recent-game-item recent-game-item--clickable"
+                  onClick={() => navigate('/review', { state: { game } })}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate('/review', { state: { game } })}
+                  aria-label={`Review game vs ${opponentName}`}
+                >
+                  <div className="recent-game-item__left">
+                    <div className="recent-game-item__opponent-info">
+                      <span className="recent-game-item__opponent">
+                        vs {opponentName}
                       </span>
-                      {hasBlindfold && (
-                        <span className="recent-game-item__badge recent-game-item__badge--blindfold">
-                          {blindfoldPercentage}% Blindfold
+                      <div className="recent-game-item__meta">
+                        <span className={`recent-game-item__badge recent-game-item__badge--${game.game_type}`}>
+                          {game.game_type}
                         </span>
-                      )}
-                      <span className="recent-game-item__date">
-                        {formatGameDate(game.created_at)}
-                      </span>
+                        {hasBlindfold && (
+                          <span className="recent-game-item__badge recent-game-item__badge--blindfold">
+                            {blindfoldPercentage}% Blindfold
+                          </span>
+                        )}
+                        <span className="recent-game-item__date">
+                          {formatGameDate(game.created_at)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="recent-game-item__right">
-                  <div className="recent-game-item__details">
-                    <span className={`recent-game-item__outcome recent-game-item__outcome--${outcome}`}>
-                      {outcome === 'win' ? 'Victory' : outcome === 'loss' ? 'Defeat' : 'Draw'}
-                    </span>
-                    <span className="recent-game-item__moves">
-                      {Math.ceil((game.total_moves || 0) / 2)} moves
-                    </span>
+                  <div className="recent-game-item__right">
+                    <div className="recent-game-item__details">
+                      <span className={`recent-game-item__outcome recent-game-item__outcome--${outcome}`}>
+                        {outcome === 'win' ? 'Victory' : outcome === 'loss' ? 'Defeat' : 'Draw'}
+                      </span>
+                      <span className="recent-game-item__moves">
+                        {Math.ceil((game.total_moves || 0) / 2)} moves
+                      </span>
+                    </div>
+                    <button
+                      className={`recent-game-item__copy-btn${copiedId === game.id ? ' recent-game-item__copy-btn--copied' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); handleCopyPGN(game.id, game.pgn) }}
+                      title="Copy PGN"
+                      aria-label="Copy PGN to clipboard"
+                    >
+                      {copiedId === game.id ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
                   </div>
-                  <button
-                    className={`recent-game-item__copy-btn${copiedId === game.id ? ' recent-game-item__copy-btn--copied' : ''}`}
-                    onClick={() => handleCopyPGN(game.id, game.pgn)}
-                    title="Copy PGN"
-                    aria-label="Copy PGN to clipboard"
-                  >
-                    {copiedId === game.id ? <Check size={14} /> : <Copy size={14} />}
-                  </button>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+
+          <div className="recent-games__footer">
+            <Link to="/learn" className="recent-games__view-all-btn">
+              View Full History
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+        </>
       )}
     </section>
   )

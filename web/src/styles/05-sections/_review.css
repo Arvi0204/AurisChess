@@ -1,0 +1,376 @@
+/* ============================================================
+   Review Page — Layout
+   ============================================================ */
+.review-main {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: #07090b;
+}
+
+.review-board-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at center, rgba(128, 207, 255, 0.10) 0%, transparent 65%),
+    radial-gradient(circle at 15% 20%, rgba(128, 207, 255, 0.05), transparent 40rem),
+    #07090b;
+}
+
+/* Eval bar + board sitting side by side */
+.review-eval-board-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  width: min(72vh, 65vw);
+  max-width: 100%;
+  justify-content: center;
+}
+
+/* ============================================================
+   Eval Bar
+   ============================================================ */
+.eval-bar {
+  position: relative;
+  width: 32px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a2229;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.eval-bar__track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.eval-bar__black {
+  background: #1a1a1a;
+  width: 100%;
+  transition: height 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.eval-bar__white {
+  background: #e8e8e8;
+  width: 100%;
+  transition: height 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.eval-bar__label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 800;
+  font-family: var(--font-primary);
+  white-space: nowrap;
+  letter-spacing: 0;
+  pointer-events: none;
+  transition: all 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.eval-bar__label--white-win {
+  bottom: 4px;
+  color: #121212;
+}
+
+.eval-bar__label--black-win {
+  top: 4px;
+  bottom: auto;
+  color: #ffffff;
+}
+
+/* ============================================================
+   Review Panel (right column)
+   ============================================================ */
+.review-panel {
+  width: 360px !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Game Header ──────────────────────────────────────────── */
+.review-game-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(15, 20, 24, 0.6);
+  flex-shrink: 0;
+}
+
+.review-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 180ms ease;
+  width: fit-content;
+}
+
+.review-back-btn:hover { color: var(--color-cyan); }
+
+.review-game-header__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-game-header__players {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.review-player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 4px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.review-player-chip--white { border-color: rgba(220, 220, 220, 0.15); }
+.review-player-chip--black { border-color: rgba(128, 207, 255, 0.15); }
+
+.review-player-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  color: var(--color-muted);
+}
+
+.review-player-avatar--dark {
+  background: rgba(128, 207, 255, 0.08);
+  color: var(--color-cyan);
+}
+
+.review-game-header__vs {
+  font-size: 0.72rem;
+  color: var(--color-muted-low);
+  font-weight: 600;
+}
+
+.review-game-header__badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.review-outcome-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.review-outcome-badge--win {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.review-outcome-badge--loss {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.review-outcome-badge--draw {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-muted);
+}
+
+.review-game-header__date {
+  font-size: 0.75rem;
+  color: var(--color-muted-low);
+  margin-left: auto;
+}
+
+/* ── Eval Score Display ───────────────────────────────────── */
+.review-eval-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.review-eval-display__score {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.review-eval-display__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted-low);
+}
+
+/* ── Top Lines ────────────────────────────────────────────── */
+.review-top-lines {
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.review-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-muted-low);
+  margin-bottom: 4px;
+}
+
+.review-section-label svg { color: var(--color-amber); }
+
+.review-inline-spinner {
+  color: var(--color-cyan);
+  animation: spin 1.4s linear infinite;
+  margin-left: 4px;
+}
+
+.review-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 180ms ease;
+}
+
+.review-line:hover { background: rgba(255, 255, 255, 0.04); }
+
+.review-line--best {
+  border-color: rgba(128, 207, 255, 0.12);
+  background: rgba(128, 207, 255, 0.04);
+}
+
+.review-line--best:hover { background: rgba(128, 207, 255, 0.07); }
+
+.review-line__score {
+  font-family: var(--font-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-cyan);
+  min-width: 42px;
+  flex-shrink: 0;
+}
+
+.review-line__moves {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  font-family: var(--font-display);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.review-top-lines__empty {
+  color: var(--color-muted-low);
+  font-size: 0.82rem;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── PGN Row ──────────────────────────────────────────────── */
+.review-pgn-row {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.review-pgn-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(128, 207, 255, 0.04);
+  border: 1px solid rgba(128, 207, 255, 0.12);
+  border-radius: 6px;
+  color: var(--color-muted-low);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.review-pgn-copy-btn:hover {
+  background: rgba(128, 207, 255, 0.10);
+  border-color: rgba(128, 207, 255, 0.25);
+  color: var(--color-cyan);
+}
+
+/* ============================================================
+   Clickable game rows (in RecentGames & LearnPage)
+   ============================================================ */
+.recent-game-item--clickable {
+  cursor: pointer;
+}
+
+.recent-game-item--clickable:hover {
+  background-color: rgba(128, 207, 255, 0.04) !important;
+  border-left: 2px solid rgba(128, 207, 255, 0.3);
+}
+
+.recent-game-item--clickable:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: -2px;
+}

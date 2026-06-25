@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bot, Mic, Swords, Users, Loader2, X, User, Flag, RotateCcw, EyeOff, Eye, Play, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, Check, RefreshCw } from 'lucide-react'
+import { Bot, EyeOff, Mic, Swords, Users, Loader2, X, Flag, RotateCcw, Eye, Play, RefreshCw } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
-import { Chessboard } from 'react-chessboard'
+import PlayerInfoBar from '../components/play/PlayerInfoBar'
+import MoveList from '../components/play/MoveList'
+import MoveNavBar from '../components/play/MoveNavBar'
+import BoardWrapper from '../components/play/BoardWrapper'
 import { Chess } from 'chess.js'
 import { useChessVoiceControl } from '../hooks/useChessVoiceControl'
+import { getKingSquareInCheck, formatTime } from '../utils/chessHelpers'
 
 import colorWhite from '../assets/color-white.svg'
 import colorRandom from '../assets/color-random.svg'
@@ -253,16 +257,8 @@ const PlayPage = () => {
 
   // Ref for chess game instance to prevent stale closure issues
   const gameRef = useRef(new Chess())
-  const moveHistoryRef = useRef<HTMLDivElement>(null)
   const totalMovesRef = useRef(0)
   const blindfoldMovesRef = useRef(0)
-
-  // Autoscroll move history to bottom when new moves are added
-  useEffect(() => {
-    if (moveHistoryRef.current) {
-      moveHistoryRef.current.scrollTop = moveHistoryRef.current.scrollHeight
-    }
-  }, [fenHistory.length])
 
   // Keyboard navigation for game history
   useEffect(() => {
@@ -922,11 +918,7 @@ const PlayPage = () => {
     }
   }, [fenHistory.length, gameStarted, gameResult, playerColor, gameMode])
 
-  const formatTime = (totalSeconds: number) => {
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
+  // formatTime is imported from chessHelpers
 
   const currentLevel = engineLevels.find((l) => l.id === selectedLevel)
   const currentTC = timeControls
@@ -945,26 +937,8 @@ const PlayPage = () => {
     ? (gameRef.current.history({ verbose: true }) as any[])[currentMoveIndex - 1]
     : null
 
-  const getKingSquareInCheck = () => {
-    try {
-      const viewedGame = new Chess(gameFen)
-      if (!viewedGame.inCheck()) return null
-      const viewedTurn = viewedGame.turn()
-      const board = viewedGame.board()
-      for (const row of board) {
-        for (const piece of row) {
-          if (piece && piece.type === 'k' && piece.color === viewedTurn) {
-            return piece.square
-          }
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return null
-  }
 
-  const kingSquare = getKingSquareInCheck()
+  const kingSquare = getKingSquareInCheck(gameFen)
 
   const customSquareStyles = {
     ...(lastMove && {
@@ -1020,127 +994,60 @@ const PlayPage = () => {
             {/* Left/Center Column: Chess Board Section */}
             <section className="board-section">
               <div className="board-container">
-                
+
                 {/* Top Player Info Bar */}
                 {boardOrientation === playerColor ? (
-                  /* Opponent (AI) at the top */
-                  <div className="player-info-bar">
-                    <div className="player-info-details">
-                      <div className="player-avatar player-avatar--ai">
-                        <Bot size={18} />
-                      </div>
-                      <div className="player-name-container">
-                        <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
-                        <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
-                      </div>
-                    </div>
-                    {gameMode === 'online' && (
-                      <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
-                        {formatTime(aiTime)}
-                      </div>
-                    )}
-                  </div>
+                  <PlayerInfoBar
+                    name={`Stockfish (${currentLevel?.label || 'Engine'})`}
+                    role="ai"
+                    subtitle={`Elo ${currentLevel?.elo || '1500'}`}
+                    showClock={gameMode === 'online'}
+                    clockSeconds={aiTime}
+                    isActiveTurn={gameMode === 'online' && gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b')}
+                    isAiTurn
+                  />
                 ) : (
-                  /* Player (User) at the top */
-                  <div className="player-info-bar">
-                    <div className="player-info-details">
-                      <div className="player-avatar player-avatar--user">
-                        <User size={18} />
-                      </div>
-                      <div className="player-name-container">
-                        <span className="player-name">{username}</span>
-                        <span className="player-elo">Player</span>
-                      </div>
-                    </div>
-                    {gameMode === 'online' && (
-                      <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
-                        {formatTime(playerTime)}
-                      </div>
-                    )}
-                  </div>
+                  <PlayerInfoBar
+                    name={username}
+                    role="user"
+                    subtitle="Player"
+                    showClock={gameMode === 'online'}
+                    clockSeconds={playerTime}
+                    isActiveTurn={gameMode === 'online' && gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b')}
+                  />
                 )}
 
-                {/* The Chessboard Wrapper */}
-                <div className="board-wrapper">
-                  <Chessboard
-                    options={{
-                      position: gameFen,
-                      boardOrientation: boardOrientation,
-                      allowDragging: !gameResult && (currentMoveIndex === gameRef.current.history().length),
-                      onPieceDrop: onDrop,
-                      onSquareClick: onSquareClick,
-                      boardStyle: {
-                        borderRadius: '8px',
-                        boxShadow: '0 5px 15px rgba(0, 0, 0, 0.5)'
-                      },
-                      squareStyles: customSquareStyles,
-                      darkSquareStyle: { backgroundColor: '#2a4d61' },
-                      lightSquareStyle: { backgroundColor: '#dfe3e7' },
-                      pieces: blindfoldMode
-                        ? {
-                            wP: () => <div style={{ opacity: 0 }} />,
-                            wN: () => <div style={{ opacity: 0 }} />,
-                            wB: () => <div style={{ opacity: 0 }} />,
-                            wR: () => <div style={{ opacity: 0 }} />,
-                            wQ: () => <div style={{ opacity: 0 }} />,
-                            wK: () => <div style={{ opacity: 0 }} />,
-                            bP: () => <div style={{ opacity: 0 }} />,
-                            bN: () => <div style={{ opacity: 0 }} />,
-                            bB: () => <div style={{ opacity: 0 }} />,
-                            bR: () => <div style={{ opacity: 0 }} />,
-                            bQ: () => <div style={{ opacity: 0 }} />,
-                            bK: () => <div style={{ opacity: 0 }} />,
-                          }
-                        : undefined
-                    }}
-                  />
-
-                  {blindfoldMode && (
-                    <div className="blindfold-mode-overlay">
-                      <EyeOff size={40} />
-                      <h4>Blindfold Mode Active</h4>
-                      <p>The pieces are hidden. Play and visualize the moves in your mind.</p>
-                    </div>
-                  )}
-                </div>
+                {/* The Chessboard */}
+                <BoardWrapper
+                  fen={gameFen}
+                  orientation={boardOrientation}
+                  squareStyles={customSquareStyles}
+                  blindfoldMode={blindfoldMode}
+                  onPieceDrop={onDrop}
+                  onSquareClick={onSquareClick}
+                  readOnly={!!gameResult && currentMoveIndex !== gameRef.current.history().length}
+                />
 
                 {/* Bottom Player Info Bar */}
                 {boardOrientation === playerColor ? (
-                  /* Player (User) at the bottom */
-                  <div className="player-info-bar">
-                    <div className="player-info-details">
-                      <div className="player-avatar player-avatar--user">
-                        <User size={18} />
-                      </div>
-                      <div className="player-name-container">
-                        <span className="player-name">{username}</span>
-                        <span className="player-elo">Player</span>
-                      </div>
-                    </div>
-                    {gameMode === 'online' && (
-                      <div className={`player-clock ${gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn' : ''}`}>
-                        {formatTime(playerTime)}
-                      </div>
-                    )}
-                  </div>
+                  <PlayerInfoBar
+                    name={username}
+                    role="user"
+                    subtitle="Player"
+                    showClock={gameMode === 'online'}
+                    clockSeconds={playerTime}
+                    isActiveTurn={gameMode === 'online' && gameRef.current.turn() === (playerColor === 'white' ? 'w' : 'b')}
+                  />
                 ) : (
-                  /* Opponent (AI) at the bottom */
-                  <div className="player-info-bar">
-                    <div className="player-info-details">
-                      <div className="player-avatar player-avatar--ai">
-                        <Bot size={18} />
-                      </div>
-                      <div className="player-name-container">
-                        <span className="player-name">Stockfish ({currentLevel?.label || 'Engine'})</span>
-                        <span className="player-elo">Elo {currentLevel?.elo || '1500'}</span>
-                      </div>
-                    </div>
-                    {gameMode === 'online' && (
-                      <div className={`player-clock ${gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b') ? 'player-clock--active-turn-ai' : ''}`}>
-                        {formatTime(aiTime)}
-                      </div>
-                    )}
-                  </div>
+                  <PlayerInfoBar
+                    name={`Stockfish (${currentLevel?.label || 'Engine'})`}
+                    role="ai"
+                    subtitle={`Elo ${currentLevel?.elo || '1500'}`}
+                    showClock={gameMode === 'online'}
+                    clockSeconds={aiTime}
+                    isActiveTurn={gameMode === 'online' && gameRef.current.turn() !== (playerColor === 'white' ? 'w' : 'b')}
+                    isAiTurn
+                  />
                 )}
 
               </div>
@@ -1149,117 +1056,31 @@ const PlayPage = () => {
             {/* Right Column: Controls section */}
             <aside className="controls-section">
 
-              {/* Move History list */}
-              <div className="move-history-container" ref={moveHistoryRef}>
-                <div className="move-history-header">
-                  <span className="move-history-title">Move History</span>
-                  {gameRef.current.history().length > 0 && (
-                    <button 
-                      className="copy-pgn-btn" 
-                      onClick={handleCopyPGN}
-                      title="Copy PGN to Clipboard"
-                    >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                      {copied ? 'Copied!' : 'Copy PGN'}
-                    </button>
-                  )}
-                </div>
-                <div className="move-history-list">
-                  {(() => {
-                    const history = gameRef.current.history()
-                    const pairs = []
-                    for (let i = 0; i < history.length; i += 2) {
-                      pairs.push({
-                        num: Math.floor(i / 2) + 1,
-                        w: history[i],
-                        b: history[i + 1] || ''
-                      })
-                    }
-                    if (pairs.length === 0) {
-                      return <span style={{ color: 'var(--muted-low)', fontSize: '0.85rem', fontStyle: 'italic' }}>No moves played yet. Drag or click pieces to make a move!</span>
-                    }
-                    return pairs.map((pair) => (
-                      <div key={pair.num} className="move-row">
-                        <span className="move-number">{pair.num}.</span>
-                        <span 
-                          className={`move-val${currentMoveIndex === (pair.num * 2 - 1) ? ' move-val--active' : ''}`}
-                          onClick={() => {
-                            setCurrentMoveIndex(pair.num * 2 - 1)
-                            setGameFen(fenHistory[pair.num * 2 - 1])
-                          }}
-                        >
-                          {pair.w}
-                        </span>
-                        {pair.b ? (
-                          <span 
-                            className={`move-val${currentMoveIndex === (pair.num * 2) ? ' move-val--active' : ''}`}
-                            onClick={() => {
-                              setCurrentMoveIndex(pair.num * 2)
-                              setGameFen(fenHistory[pair.num * 2])
-                            }}
-                          >
-                            {pair.b}
-                          </span>
-                        ) : (
-                          <span className="move-val move-val--empty" />
-                        )}
-                      </div>
-                    ))
-                  })()}
-                </div>
-              </div>
+              {/* Move List */}
+              <MoveList
+                moves={gameRef.current.history()}
+                currentIndex={currentMoveIndex}
+                fenHistory={fenHistory}
+                onSelectMove={(idx, fen) => {
+                  setCurrentMoveIndex(idx)
+                  setGameFen(fen)
+                }}
+                showCopyPgn
+                onCopyPgn={handleCopyPGN}
+                copied={copied}
+                emptyMessage="No moves played yet. Drag or click pieces to make a move!"
+              />
 
-              {/* Move History Navigation Controls */}
+              {/* Move Navigation Bar */}
               {gameRef.current.history().length > 0 && (
-                <div className="history-navigation-bar">
-                  <button
-                    className="history-nav-btn"
-                    onClick={() => {
-                      setCurrentMoveIndex(0)
-                      setGameFen(fenHistory[0])
-                    }}
-                    disabled={currentMoveIndex === 0}
-                    title="First Move"
-                  >
-                    <ChevronsLeft size={20} />
-                  </button>
-                  <button
-                    className="history-nav-btn"
-                    onClick={() => {
-                      const nextIndex = Math.max(0, currentMoveIndex - 1)
-                      setCurrentMoveIndex(nextIndex)
-                      setGameFen(fenHistory[nextIndex])
-                    }}
-                    disabled={currentMoveIndex === 0}
-                    title="Previous Move"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <button
-                    className="history-nav-btn"
-                    onClick={() => {
-                      const nextIndex = Math.min(gameRef.current.history().length, currentMoveIndex + 1)
-                      setCurrentMoveIndex(nextIndex)
-                      setGameFen(fenHistory[nextIndex])
-                    }}
-                    disabled={currentMoveIndex === gameRef.current.history().length}
-                    title="Next Move"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                  <button
-                    className="history-nav-btn"
-                    onClick={() => {
-                      const nextIndex = gameRef.current.history().length
-                      setCurrentMoveIndex(nextIndex)
-                      setGameFen(fenHistory[nextIndex])
-                    }}
-                    disabled={currentMoveIndex === gameRef.current.history().length}
-                    title="Last Move"
-                  >
-                    <ChevronsRight size={20} />
-                  </button>
-                </div>
+                <MoveNavBar
+                  currentIndex={currentMoveIndex}
+                  totalMoves={gameRef.current.history().length}
+                  onFirst={() => { setCurrentMoveIndex(0); setGameFen(fenHistory[0]) }}
+                  onPrev={() => { const i = Math.max(0, currentMoveIndex - 1); setCurrentMoveIndex(i); setGameFen(fenHistory[i]) }}
+                  onNext={() => { const i = Math.min(gameRef.current.history().length, currentMoveIndex + 1); setCurrentMoveIndex(i); setGameFen(fenHistory[i]) }}
+                  onLast={() => { const i = gameRef.current.history().length; setCurrentMoveIndex(i); setGameFen(fenHistory[i]) }}
+                />
               )}
 
               {/* Voice Control Panel */}
