@@ -144,17 +144,20 @@ async function persistGameEnd(room, result) {
       return;
     }
 
+    const wEmailLower = whiteEmail.toLowerCase();
+    const bEmailLower = blackEmail.toLowerCase();
+
     // Inline ELO calculation (mirrors userController.endMultiplayerGame)
     const isRapid = gameType === 'rapid';
     const ratingColumn = isRapid ? 'rating_rapid' : 'rating_blitz';
 
     const [whiteUser, blackUser] = await Promise.all([
-      db.oneOrNone(`SELECT id, ${ratingColumn} as rating FROM users WHERE email = $1`, [whiteEmail]),
-      db.oneOrNone(`SELECT id, ${ratingColumn} as rating FROM users WHERE email = $1`, [blackEmail]),
+      db.oneOrNone(`SELECT id, ${ratingColumn} as rating FROM users WHERE LOWER(email) = $1`, [wEmailLower]),
+      db.oneOrNone(`SELECT id, ${ratingColumn} as rating FROM users WHERE LOWER(email) = $1`, [bEmailLower]),
     ]);
 
     if (!whiteUser || !blackUser) {
-      console.warn('[Game] Could not find users in DB — skipping ELO update');
+      console.warn(`[Game] Could not find users in DB (whiteEmail: ${wEmailLower}, blackEmail: ${bEmailLower}) — skipping ELO update`);
       return;
     }
 

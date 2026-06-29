@@ -125,7 +125,7 @@ function scanBucket(io, timeControl) {
 /**
  * Handle a player joining the matchmaking queue.
  */
-function handleJoin(io, socket, { rating, timeControl, userId, username }) {
+function handleJoin(io, socket, { rating, timeControl, userId, username, email }) {
   // Remove any existing entry for this socket (safety guard)
   handleCancel(socket);
 
@@ -133,6 +133,7 @@ function handleJoin(io, socket, { rating, timeControl, userId, username }) {
     socketId: socket.id,
     userId,
     username,
+    email,
     rating: rating || 1200,
     timeControl,
     joinedAt: Date.now(),
