@@ -25,6 +25,8 @@ const PlayerInfoBar = ({
   const avatarClass =
     role === 'ai'
       ? 'player-avatar player-avatar--ai'
+      : role === 'opponent'
+      ? 'player-avatar player-avatar--opponent'
       : 'player-avatar player-avatar--user'
 
   const clockClass = isAiTurn

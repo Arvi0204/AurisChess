@@ -79,6 +79,12 @@
   color: var(--color-cyan);
 }
 
+.player-avatar--opponent {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: #a855f7;
+}
+
 .player-name-container {
   display: flex;
   flex-direction: column;

@@ -22,6 +22,9 @@ interface VoiceControlProps {
   setVoiceStatus: (status: string) => void;
   volume: number;
   gameResult: { type: 'win' | 'loss' | 'draw'; reason: string } | null;
+  offerDraw?: () => void;
+  drawOffer?: { by: string } | null;
+  respondDraw?: (accepted: boolean) => void;
 }
 
 export const useChessVoiceControl = ({
@@ -36,6 +39,9 @@ export const useChessVoiceControl = ({
   setVoiceStatus,
   volume,
   gameResult,
+  offerDraw,
+  drawOffer,
+  respondDraw,
 }: VoiceControlProps) => {
   // Refs for the audio pipeline
   const mediaStreamRef    = useRef<MediaStream | null>(null);
@@ -56,13 +62,15 @@ export const useChessVoiceControl = ({
   const refs = useRef({
     game, makeMove, setBlindfoldMode, setShowResignConfirm,
     showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
+    offerDraw, drawOffer, respondDraw,
   });
   useEffect(() => {
     refs.current = {
       game, makeMove, setBlindfoldMode, setShowResignConfirm,
       showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
+      offerDraw, drawOffer, respondDraw,
     };
-  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult]);
+  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw]);
 
   useEffect(() => { isActiveRef.current = isVoiceActive; }, [isVoiceActive]);
 
@@ -126,7 +134,7 @@ export const useChessVoiceControl = ({
     // Ambient noise / random words like "the" or "okay" should be silently ignored.
     const chessIndicators = [
       /[a-h][1-8]/,                              // square coordinate
-      /\b(knight|bishop|rook|queen|king|pawn|castle|resign|blindfold|forfeit|give up)\b/,
+      /\b(knight|bishop|rook|queen|king|pawn|castle|resign|blindfold|forfeit|give up|draw|accept|decline)\b/,
     ];
     const hasChessIntent = chessIndicators.some(r => r.test(cleanText));
     const silentFail = (msg: string) => {
@@ -134,6 +142,32 @@ export const useChessVoiceControl = ({
       console.log(`[Voice] Ignored (no chess intent): "${rawText}" — ${msg}`);
       current.setVoiceStatus("Listening... Speak your move");
     };
+
+    // Draw offer flow
+    if (current.drawOffer && current.respondDraw) {
+      if (cleanText.match(/\b(yes|accept|agree|confirm)\b/)) {
+        speakText('Accepting draw offer.');
+        current.respondDraw(true);
+        return;
+      }
+      if (cleanText.match(/\b(no|decline|reject|cancel)\b/)) {
+        speakText('Declining draw offer.');
+        current.respondDraw(false);
+        return;
+      }
+    }
+
+    // Offer draw trigger
+    if (cleanText.match(/\b(offer draw|propose draw|request draw|draw offer)\b/)) {
+      if (current.offerDraw) {
+        speakText('Offering a draw.');
+        current.offerDraw();
+      } else {
+        speakText('Draw offers are only available in online mode.');
+      }
+      return;
+    }
+
     // Resign flow
     if (current.showResignConfirm) {
       if (!hasChessIntent && !cleanText.match(/\b(yes|no|confirm|cancel|sure|dont)\b/)) {
