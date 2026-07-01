@@ -592,7 +592,12 @@ const PlayPage = () => {
         updateGameStateAfterMove()
         setSelectedSquare(null)
         setManualPremove(null)
-        mp.sendMove({ from: move.from, to: move.to, promotion: moveObj.promotion })
+        mp.sendMove({
+          from: move.from,
+          to: move.to,
+          promotion: moveObj.promotion,
+          isBlindfold: blindfoldModeRef.current
+        })
         return move
       }
     } catch { return null }

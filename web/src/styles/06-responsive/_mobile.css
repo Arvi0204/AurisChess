@@ -131,10 +131,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .quick-stats .stat-item:last-child {
-    grid-column: 1 / -1;
-  }
-
   /* Play Page Overrides */
   .play-mode-grid {
     grid-template-columns: 1fr;

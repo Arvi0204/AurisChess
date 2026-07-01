@@ -72,6 +72,7 @@ interface MovePayload {
   from: string;
   to: string;
   promotion?: string;
+  isBlindfold?: boolean;
 }
 
 interface UseMultiplayerSocketProps {
@@ -249,10 +250,10 @@ export function useMultiplayerSocket({
     setMatchmakingStatus('Searching for a worthy opponent…');
   }, []);
 
-  const sendMove = useCallback(({ from, to, promotion }: MovePayload) => {
+  const sendMove = useCallback(({ from, to, promotion, isBlindfold }: MovePayload) => {
     const info = matchInfoRef.current;
     if (!info) return;
-    socketRef.current?.emit('game:move', { roomId: info.roomId, from, to, promotion });
+    socketRef.current?.emit('game:move', { roomId: info.roomId, from, to, promotion, isBlindfold });
   }, []);
 
   const sendResign = useCallback(() => {

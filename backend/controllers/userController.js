@@ -31,7 +31,7 @@ const getUserStats = async (req, res) => {
     const dbUser = await getOrCreateUser(req.user.email, req.user.username);
 
     // Fetch rating history and game stats in parallel to reduce database latency (round-trips)
-    const [rapidHistoryRes, blitzHistoryRes, statsResult] = await Promise.all([
+    const [rapidHistoryRes, blitzHistoryRes, statsResult, recentGames] = await Promise.all([
       db.any(
         `SELECT rating_after as rating, change_amount as change, created_at as date 
          FROM rating_history 
@@ -48,14 +48,39 @@ const getUserStats = async (req, res) => {
       ),
       db.one(
         `SELECT 
-          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'white') OR (black_player_id = $1 AND result = 'black')) as wins,
-          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'black') OR (black_player_id = $1 AND result = 'white')) as losses,
-          COUNT(*) FILTER (WHERE result = 'draw') as draws
+          COUNT(*) as total_games,
+          COUNT(*) FILTER (WHERE game_type IN ('rapid', 'blitz')) as multiplayer_games,
+          COUNT(*) FILTER (WHERE game_type = 'engine') as engine_games,
+          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'white' AND game_type IN ('rapid', 'blitz')) OR (black_player_id = $1 AND result = 'black' AND game_type IN ('rapid', 'blitz'))) as wins,
+          COUNT(*) FILTER (WHERE (white_player_id = $1 AND result = 'black' AND game_type IN ('rapid', 'blitz')) OR (black_player_id = $1 AND result = 'white' AND game_type IN ('rapid', 'blitz'))) as losses,
+          COUNT(*) FILTER (WHERE result = 'draw' AND game_type IN ('rapid', 'blitz')) as draws
         FROM games
-        WHERE (white_player_id = $1 OR black_player_id = $1) AND game_type IN ('rapid', 'blitz')`,
+        WHERE white_player_id = $1 OR black_player_id = $1`,
+        [dbUser.id]
+      ),
+      db.any(
+        `SELECT result, white_player_id, black_player_id, game_type 
+         FROM games 
+         WHERE (white_player_id = $1 OR black_player_id = $1) AND game_type IN ('rapid', 'blitz')
+         ORDER BY created_at DESC 
+         LIMIT 100`,
         [dbUser.id]
       )
     ]);
+
+    // Calculate win streak (ignoring draws, breaking on loss)
+    let winStreak = 0;
+    for (const g of recentGames) {
+      const isWhite = g.white_player_id === dbUser.id;
+      const isWin = (isWhite && g.result === 'white') || (!isWhite && g.result === 'black');
+      const isLoss = (isWhite && g.result === 'black') || (!isWhite && g.result === 'white');
+
+      if (isWin) {
+        winStreak++;
+      } else if (isLoss) {
+        break;
+      }
+    }
 
     let rapidHistory = rapidHistoryRes;
     let blitzHistory = blitzHistoryRes;
@@ -86,13 +111,15 @@ const getUserStats = async (req, res) => {
     }
 
     // Determine if user has any real games recorded
-    const totalRealGames = parseInt(statsResult.wins) + parseInt(statsResult.losses) + parseInt(statsResult.draws);
+    const totalRealGames = parseInt(statsResult.total_games);
 
     // If no games played, display mock totals matching the mock progression.
     // Otherwise, show their real record.
     const wins = totalRealGames > 0 ? parseInt(statsResult.wins) : 3;
     const losses = totalRealGames > 0 ? parseInt(statsResult.losses) : 2;
     const draws = totalRealGames > 0 ? parseInt(statsResult.draws) : 0;
+    const totalGames = totalRealGames > 0 ? totalRealGames : 5;
+    const streak = totalRealGames > 0 ? winStreak : 2;
 
     return res.json({
       success: true,
@@ -108,7 +135,15 @@ const getUserStats = async (req, res) => {
         },
         rapidHistory,
         blitzHistory,
-        stats: { wins, losses, draws },
+        stats: { 
+          wins, 
+          losses, 
+          draws,
+          total_games: totalGames,
+          win_streak: streak,
+          multiplayer_games: totalRealGames > 0 ? parseInt(statsResult.multiplayer_games) : 5,
+          engine_games: totalRealGames > 0 ? parseInt(statsResult.engine_games) : 0
+        },
       },
     });
   } catch (err) {
@@ -173,7 +208,7 @@ const updateProfile = async (req, res) => {
  * End a multiplayer game, calculate rating adjustments, and log match.
  */
 const endMultiplayerGame = async (req, res) => {
-  const { whitePlayerEmail, blackPlayerEmail, result, gameType, pgn } = req.body;
+  const { whitePlayerEmail, blackPlayerEmail, result, gameType, pgn, blindfoldMoves, totalMoves } = req.body;
 
   if (!whitePlayerEmail || !blackPlayerEmail || !result || !gameType) {
     return res.status(400).json({ success: false, message: 'Missing required parameters.' });
@@ -211,10 +246,18 @@ const endMultiplayerGame = async (req, res) => {
 
     // Log the game record
     const game = await db.one(
-      `INSERT INTO games (white_player_id, black_player_id, game_type, result, pgn)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO games (white_player_id, black_player_id, game_type, result, pgn, blindfold_moves, total_moves)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [whiteUser.id, blackUser.id, gameType, result, pgn || '']
+      [
+        whiteUser.id,
+        blackUser.id,
+        gameType,
+        result,
+        pgn || '',
+        parseInt(blindfoldMoves, 10) || 0,
+        parseInt(totalMoves, 10) || 0
+      ]
     );
 
     // Save ratings and record history in parallel

@@ -86,6 +86,7 @@ function createRoom(roomId, white, black, timeControl) {
     turnStartAt:        Date.now(),
     turn:               'w',
     pgn:                '',
+    blindfoldMoves:     0,
     drawOfferBy:        null,
     reconnectTimer:     null,
     disconnectedColor:  null,
@@ -176,11 +177,14 @@ async function persistGameEnd(room, result) {
     const newRA = rA + changeA;
     const newRB = rB + changeB;
 
+    const totalMoves = room.chess.history().length;
+    const blindfoldMoves = room.blindfoldMoves || 0;
+
     const game = await db.one(
-      `INSERT INTO games (white_player_id, black_player_id, game_type, result, pgn)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO games (white_player_id, black_player_id, game_type, result, pgn, blindfold_moves, total_moves)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [whiteUser.id, blackUser.id, gameType, result, pgn || '']
+      [whiteUser.id, blackUser.id, gameType, result, pgn || '', blindfoldMoves, totalMoves]
     );
 
     await Promise.all([
@@ -261,7 +265,7 @@ function handleJoinRoom(io, socket, { roomId }) {
 /**
  * Handle a move from a player.
  */
-function handleMove(io, socket, { roomId, from, to, promotion }) {
+function handleMove(io, socket, { roomId, from, to, promotion, isBlindfold }) {
   const room = getRoom(roomId);
   if (!room) { socket.emit('game:error', { message: 'Room not found.' }); return; }
 
@@ -287,6 +291,11 @@ function handleMove(io, socket, { roomId, from, to, promotion }) {
   if (!move) {
     socket.emit('game:move-rejected', { reason: 'Illegal move.' });
     return;
+  }
+
+  // Update blindfold moves counter
+  if (isBlindfold) {
+    room.blindfoldMoves = (room.blindfoldMoves || 0) + 1;
   }
 
   // Update clock

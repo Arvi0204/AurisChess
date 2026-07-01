@@ -1,14 +1,20 @@
-import { Activity, Award, Flame, Mic, Target } from 'lucide-react'
+import { Swords, Flame, Clock, Zap } from 'lucide-react'
 
-const stats = [
-  { icon: Target, label: 'Games Played', value: '0', type: 'cyan' },
-  { icon: Activity, label: 'Win Rate', value: '—', type: 'indigo' },
-  { icon: Flame, label: 'Streak', value: '0', type: 'orange' },
-  { icon: Mic, label: 'Voice Accuracy', value: '—', type: 'emerald' },
-  { icon: Award, label: 'Rating', value: 'Unrated', type: 'amber' },
-]
+interface QuickStatsProps {
+  totalGames: number | string
+  streak: number | string
+  ratingRapid: number | string
+  ratingBlitz: number | string
+}
 
-const QuickStats = () => {
+const QuickStats = ({ totalGames, streak, ratingRapid, ratingBlitz }: QuickStatsProps) => {
+  const stats = [
+    { icon: Swords, label: 'Total Games', value: totalGames.toString(), type: 'cyan' },
+    { icon: Flame, label: 'Win Streak', value: streak.toString(), type: 'orange' },
+    { icon: Clock, label: 'Rapid Rating', value: ratingRapid.toString(), type: 'amber' },
+    { icon: Zap, label: 'Blitz Rating', value: ratingBlitz.toString(), type: 'indigo' },
+  ]
+
   return (
     <section className="quick-stats" aria-label="Player statistics">
       {stats.map(({ icon: Icon, label, value, type }) => (
