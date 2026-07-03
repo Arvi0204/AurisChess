@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Bot, X } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
+import PageHeader from '../components/dashboard/PageHeader'
 import GameBoard from '../components/play/GameBoard'
 import GameControlsPanel from '../components/play/GameControlsPanel'
 import EngineSetupCard from '../components/play/EngineSetupCard'
@@ -865,7 +866,7 @@ const PlayPage = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={`dashboard-shell play-shell${isCollapsed || gameStarted ? ' sidebar-collapsed' : ''}`}>
+    <div className={`dashboard-shell play-shell${isCollapsed || gameStarted ? ' sidebar-collapsed' : ''} ${gameStarted ? 'game-active' : 'game-setup'}`}>
       <DashboardSidebar
         username={username}
         isCollapsed={isCollapsed || gameStarted}
@@ -873,6 +874,13 @@ const PlayPage = () => {
       />
 
       <main className="dashboard-main">
+        {!gameStarted && (
+          <PageHeader
+            title={<>Play <span>Chess</span></>}
+            subtitle="Choose your game mode and jump right into a match."
+          />
+        )}
+
         {gameStarted ? (
           <div className="game-main">
             {/* Opponent disconnected banner */}
@@ -997,10 +1005,6 @@ const PlayPage = () => {
         ) : (
           /* Setup View */
           <div className="play-page-content">
-            <div className="play-page-heading">
-              <h2>Choose Your Game Mode</h2>
-              <p>Select how you want to play and jump right into a match</p>
-            </div>
             <div className="play-mode-grid">
               <EngineSetupCard
                 selectedLevel={selectedLevel}

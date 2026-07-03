@@ -19,6 +19,10 @@
     #0f1417;
 }
 
+.header-brand-mobile {
+  display: none;
+}
+
 .dashboard-greeting h1 {
   margin-bottom: 8px;
   font-size: clamp(1.6rem, 3vw, 2.2rem);

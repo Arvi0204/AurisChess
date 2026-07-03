@@ -1,14 +1,28 @@
 /* Play Shell Wrapper */
 .play-shell {
-  height: 100vh;
   min-height: 100vh;
+}
+
+.play-shell.game-active {
+  height: 100vh;
   overflow: hidden;
 }
 
-.play-shell .dashboard-main {
+.play-shell.game-active .dashboard-main {
   height: 100vh;
   min-height: 0;
   overflow: hidden;
+}
+
+.play-shell.game-setup {
+  height: auto;
+  overflow: visible;
+}
+
+.play-shell.game-setup .dashboard-main {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
 }
 
 .play-page-content {

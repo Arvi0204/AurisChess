@@ -71,6 +71,14 @@
     display: grid;
   }
 
+  .sidebar-collapse-btn {
+    display: none;
+  }
+
+  .dashboard-sidebar .sidebar-logo {
+    margin-left: 54px;
+  }
+
   .sidebar-overlay {
     display: block;
     position: fixed;
@@ -81,7 +89,23 @@
   }
 
   .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
     padding-left: 72px;
+  }
+
+  .header-brand-mobile {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    margin-bottom: 4px;
+  }
+
+  .header-brand-mobile .logo__text {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: auto !important;
+    display: inline-flex !important;
   }
 
   .play-cards {
