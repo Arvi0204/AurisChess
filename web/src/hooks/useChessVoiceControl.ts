@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Chess, Move } from 'chess.js';
+import { API_BASE } from '../config/api';
 
-const BACKEND_TRANSCRIBE_URL = 'http://localhost:3000/api/voice/transcribe';
+const BACKEND_TRANSCRIBE_URL = `${API_BASE}/api/voice/transcribe`;
 
 // How long a continuous silence (ms) triggers transcription
 const SILENCE_THRESHOLD_MS = 1200;

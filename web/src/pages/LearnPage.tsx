@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import PageHeader from '../components/dashboard/PageHeader'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
+import { API_BASE } from '../config/api'
 
 type GameRecord = {
   id: number
@@ -113,7 +114,7 @@ const GameHistorySection = () => {
         const token = localStorage.getItem('authToken')
         if (!token) { setLoading(false); return }
 
-        const res = await fetch('http://localhost:3000/api/user/games', {
+        const res = await fetch(`${API_BASE}/api/user/games`, {
           headers: { 'Authorization': `Bearer ${token}` },
         })
         if (!res.ok) throw new Error('Failed to fetch games')
