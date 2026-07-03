@@ -21,7 +21,7 @@ interface VoiceControlProps {
   isPlayerTurn: boolean;
   setVoiceStatus: (status: string) => void;
   volume: number;
-  gameResult: { type: 'win' | 'loss' | 'draw'; reason: string } | null;
+  gameResult: { type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null;
   offerDraw?: () => void;
   drawOffer?: { by: string } | null;
   respondDraw?: (accepted: boolean) => void;

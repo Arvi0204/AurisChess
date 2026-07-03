@@ -59,7 +59,7 @@ const rooms = new Map();
 
 // ── Room management ──────────────────────────────────────────────────────────
 
-function createRoom(roomId, white, black, timeControl) {
+function createRoom(io, roomId, white, black, timeControl) {
   const initMs = TIME_INITIAL_MS[timeControl] ?? 600_000;
   const chess = new Chess();
 
@@ -90,11 +90,13 @@ function createRoom(roomId, white, black, timeControl) {
     drawOfferBy:        null,
     reconnectTimer:     null,
     disconnectedColor:  null,
-    io:                 null, // set by index.js after creation
+    io,
+    idleTimer:          null,
   };
 
   rooms.set(roomId, room);
   console.log(`[Game] Room created: ${roomId} | ${white.username} vs ${black.username} | tc=${timeControl}`);
+  resetIdleTimer(io, room);
   return room;
 }
 
@@ -105,6 +107,28 @@ function getRoom(roomId) {
 function deleteRoom(roomId) {
   rooms.delete(roomId);
   console.log(`[Game] Room deleted: ${roomId}`);
+}
+
+const IDLE_ABORT_TIMEOUT_MS = 60_000; // 1 minute in milliseconds
+
+function resetIdleTimer(io, room) {
+  if (room.idleTimer) {
+    clearTimeout(room.idleTimer);
+  }
+  room.idleTimer = setTimeout(() => {
+    console.log(`[Game] Room ${room.roomId} aborted due to inactivity.`);
+    emitGameAborted(io, room, 'Game aborted due to inactivity');
+  }, IDLE_ABORT_TIMEOUT_MS);
+}
+
+function emitGameAborted(io, room, reason) {
+  if (!room) return;
+  const { roomId } = room;
+  io.to(roomId).emit('game:aborted', { reason });
+
+  if (room.reconnectTimer) clearTimeout(room.reconnectTimer);
+  if (room.idleTimer) clearTimeout(room.idleTimer);
+  deleteRoom(roomId);
 }
 
 // ── Clock helpers ────────────────────────────────────────────────────────────
@@ -342,6 +366,11 @@ function handleMove(io, socket, { roomId, from, to, promotion, isBlindfold }) {
 
   if (gameOver) {
     emitGameOver(io, room, gameOver.result, gameOver.reason);
+  } else {
+    if (room.idleTimer) {
+      clearTimeout(room.idleTimer);
+      room.idleTimer = null;
+    }
   }
 }
 
@@ -472,6 +501,7 @@ async function emitGameOver(io, room, result, reason) {
 
   // Cleanup
   if (room.reconnectTimer) clearTimeout(room.reconnectTimer);
+  if (room.idleTimer) clearTimeout(room.idleTimer);
   deleteRoom(roomId);
 }
 

@@ -91,7 +91,7 @@ function scanBucket(io, timeControl) {
           : [opponent, candidate];
 
       const roomId = uuidv4();
-      createRoom(roomId, white, black, timeControl);
+      createRoom(io, roomId, white, black, timeControl);
 
       // Notify both players
       io.to(white.socketId).emit('matchmaking:found', {

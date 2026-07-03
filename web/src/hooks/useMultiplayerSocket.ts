@@ -50,7 +50,7 @@ export interface ServerClocks {
 }
 
 export interface GameResult {
-  result: 'white' | 'black' | 'draw';
+  result: 'white' | 'black' | 'draw' | 'aborted';
   reason: string;
 }
 
@@ -182,6 +182,11 @@ export function useMultiplayerSocket({
     socket.on('game:over', (data: GameResult & { whiteTimeMs: number; blackTimeMs: number }) => {
       setGameResult({ result: data.result, reason: data.reason });
       setServerClocks({ whiteTimeMs: data.whiteTimeMs, blackTimeMs: data.blackTimeMs });
+      setMatchState('over');
+    });
+
+    socket.on('game:aborted', (data: { reason: string }) => {
+      setGameResult({ result: 'aborted', reason: data.reason });
       setMatchState('over');
     });
 

@@ -11,7 +11,7 @@ interface GameBoardProps {
   blindfoldMode: boolean
   onDrop: (args: { piece: any; sourceSquare: string; targetSquare: string | null }) => boolean
   onSquareClick: (args: { piece?: any; square: string }) => void
-  gameResult: { type: 'win' | 'loss' | 'draw'; reason: string } | null
+  gameResult: { type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null
   currentMoveIndex: number
   historyLength: number
   username: string

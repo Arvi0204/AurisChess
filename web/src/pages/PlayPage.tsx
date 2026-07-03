@@ -85,9 +85,10 @@ const PlayPage = () => {
   // ── Control panel states ──────────────────────────────────────────────────
   const [blindfoldMode, setBlindfoldMode] = useState(false)
   const [showResignConfirm, setShowResignConfirm] = useState(false)
-  const [gameResult, setGameResult] = useState<{ type: 'win' | 'loss' | 'draw'; reason: string } | null>(null)
+  const [gameResult, setGameResult] = useState<{ type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [abortSecondsLeft, setAbortSecondsLeft] = useState<number | null>(null)
 
   // ── Voice states ──────────────────────────────────────────────────────────
   const [isVoiceActive, setIsVoiceActive] = useState(false)
@@ -107,7 +108,7 @@ const PlayPage = () => {
     stateRef.current = { gameMode, gameResult, playerColor, selectedLevel, selectedTimeControl, blindfoldMode, playerTime, opponentTime }
   })
   const gameModeRef = useRef<'computer' | 'online' | null>(null)
-  const gameResultRef = useRef<{ type: 'win' | 'loss' | 'draw'; reason: string } | null>(null)
+  const gameResultRef = useRef<{ type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null>(null)
   const playerColorRef = useRef<'white' | 'black'>('white')
   const selectedLevelRef = useRef<string>('medium')
   const selectedTimeControlRef = useRef<string>('rapid-10-0')
@@ -218,7 +219,7 @@ const PlayPage = () => {
   useEffect(() => {
     if (!mp.lastAppliedMove || gameMode !== 'online') return
 
-    const { from, to, san } = mp.lastAppliedMove
+    const { from, to } = mp.lastAppliedMove
     const sent = lastSentMoveRef.current
 
     // If the from/to matches what we sent → our own optimistic update, skip
@@ -270,8 +271,9 @@ const PlayPage = () => {
     if (!mp.gameResult || gameMode !== 'online') return
     const { result, reason } = mp.gameResult
     const isWhite = playerColorRef.current === 'white'
-    let type: 'win' | 'loss' | 'draw' = 'draw'
+    let type: 'win' | 'loss' | 'draw' | 'aborted' = 'draw'
     if (result === 'draw') type = 'draw'
+    else if (result === 'aborted') type = 'aborted'
     else if ((result === 'white' && isWhite) || (result === 'black' && !isWhite)) type = 'win'
     else type = 'loss'
     setGameResult({ type, reason })
@@ -380,6 +382,48 @@ const PlayPage = () => {
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Inactivity / Unattended abort timer ──────────────────────────────────
+  const lastMoveTimeRef = useRef<number>(Date.now())
+
+  // Track the timestamp of the last move
+  useEffect(() => {
+    if (gameStarted && !gameResult) {
+      lastMoveTimeRef.current = Date.now()
+    }
+  }, [fenHistory.length, gameStarted, gameResult])
+
+  // Timer checking for inactivity (for both engine and online modes) before first move is made
+  useEffect(() => {
+    if (!gameStarted || gameResult || fenHistory.length > 1) {
+      setAbortSecondsLeft(null)
+      return
+    }
+
+    const interval = setInterval(() => {
+      const INACTIVITY_LIMIT_MS = 60_000 // 1 minute in milliseconds
+      
+      const elapsedMs = Date.now() - lastMoveTimeRef.current
+      const secondsLeft = Math.max(0, Math.ceil((INACTIVITY_LIMIT_MS - elapsedMs) / 1000))
+      
+      if (secondsLeft <= 50) {
+        setAbortSecondsLeft(secondsLeft)
+      } else {
+        setAbortSecondsLeft(null)
+      }
+
+      // Trigger client-side abort only for computer mode when time runs out
+      if (gameMode === 'computer' && elapsedMs >= INACTIVITY_LIMIT_MS) {
+        setGameResult({ type: 'aborted', reason: 'Inactivity' })
+        setAbortSecondsLeft(null)
+      }
+    }, 1000)
+
+    return () => {
+      clearInterval(interval)
+      setAbortSecondsLeft(null)
+    }
+  }, [gameStarted, gameResult, gameMode, fenHistory.length])
 
   // Keyboard navigation
   useEffect(() => {
@@ -508,7 +552,7 @@ const PlayPage = () => {
 
   useEffect(() => {
     if (gameResult && gameMode === 'computer') {
-      if (totalMovesRef.current >= 2) saveEngineGameToDb()
+      if (gameResult.type !== 'aborted' && totalMovesRef.current >= 2) saveEngineGameToDb()
       try { localStorage.removeItem('activeEngineGame') } catch { /* ignore */ }
     }
   }, [gameResult, gameMode])
@@ -843,6 +887,21 @@ const PlayPage = () => {
               </div>
             )}
 
+            {/* Inactivity warning banner */}
+            {abortSecondsLeft !== null && abortSecondsLeft <= 50 && (
+              <div style={{
+                position: 'fixed', top: '70px', left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)',
+                borderRadius: '10px', padding: '10px 20px', color: '#fcd34d',
+                fontSize: '0.85rem', zIndex: 200, backdropFilter: 'blur(12px)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+              }}>
+                <span style={{ animation: 'pulse 1.5s infinite' }}>⚠️</span>
+                <span>Game will be auto-aborted due to inactivity in <strong>{abortSecondsLeft}</strong> seconds.</span>
+              </div>
+            )}
+
             <GameBoard
               gameMode={gameMode!}
               playerColor={playerColor}
@@ -907,11 +966,12 @@ const PlayPage = () => {
                     <X size={18} />
                   </button>
                   <span className="game-result-title">
-                    {gameResult.type === 'win' ? 'Victory!' : gameResult.type === 'loss' ? 'Defeat' : 'Draw'}
+                    {gameResult.type === 'win' ? 'Victory!' : gameResult.type === 'loss' ? 'Defeat' : gameResult.type === 'aborted' ? 'Aborted' : 'Draw'}
                   </span>
                   <span className="game-result-desc">
                     {gameResult.type === 'win' && `You won by ${gameResult.reason}.`}
                     {gameResult.type === 'loss' && `${gameMode === 'online' ? 'Opponent' : 'AI'} won by ${gameResult.reason}.`}
+                    {gameResult.type === 'aborted' && `Game aborted: ${gameResult.reason}.`}
                     {gameResult.type === 'draw' && `Game drawn by ${gameResult.reason}.`}
                   </span>
                   {mp.ratingUpdate && gameMode === 'online' && (
@@ -922,7 +982,12 @@ const PlayPage = () => {
                         : (mp.ratingUpdate.black.change >= 0 ? '+' : '') + mp.ratingUpdate.black.change})
                     </div>
                   )}
-                  <button className="primary-button game-result-btn" onClick={resetGame}>
+                  <button
+                    className={`play-mode-cta game-result-btn ${
+                      gameMode === 'online' ? 'play-mode-cta--cyan' : 'play-mode-cta--amber'
+                    }`}
+                    onClick={resetGame}
+                  >
                     {gameMode === 'online' ? 'Exit to Lobby' : 'Play Again'}
                   </button>
                 </div>

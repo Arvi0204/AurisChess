@@ -14,7 +14,7 @@ interface GameControlsPanelProps {
   isVoiceActive: boolean
   toggleVoiceControl: () => void
   voiceStatus: string
-  gameResult: { type: 'win' | 'loss' | 'draw'; reason: string } | null
+  gameResult: { type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null
   showResignConfirm: boolean
   setShowResignConfirm: (val: boolean) => void
   handleResign: () => void
@@ -51,7 +51,6 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
   resetGame,
   blindfoldMode,
   setBlindfoldMode,
-  boardOrientation,
   setBoardOrientation,
   offerDraw,
   drawOfferFrom,
