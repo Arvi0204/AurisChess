@@ -14,6 +14,10 @@
   overflow: hidden;
 }
 
+.play-shell.game-active .dashboard-header {
+  display: none;
+}
+
 .play-shell.game-setup {
   height: auto;
   overflow: visible;

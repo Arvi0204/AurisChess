@@ -874,12 +874,10 @@ const PlayPage = () => {
       />
 
       <main className="dashboard-main">
-        {!gameStarted && (
-          <PageHeader
-            title={<>Play <span>Chess</span></>}
-            subtitle="Choose your game mode and jump right into a match."
-          />
-        )}
+        <PageHeader
+          title={!gameStarted ? <>Play <span>Chess</span></> : undefined}
+          subtitle={!gameStarted ? "Choose your game mode and jump right into a match." : undefined}
+        />
 
         {gameStarted ? (
           <div className="game-main">

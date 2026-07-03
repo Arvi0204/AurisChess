@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import logo from '../../assets/aurischess-logo.svg'
 
 type PageHeaderProps = {
-  title: React.ReactNode
-  subtitle: string
+  title?: React.ReactNode
+  subtitle?: string
 }
 
 const PageHeader = ({ title, subtitle }: PageHeaderProps) => {
@@ -16,10 +16,12 @@ const PageHeader = ({ title, subtitle }: PageHeaderProps) => {
           <span className="logo__text">Auris<span>Chess</span></span>
         </Link>
       </div>
-      <div className="dashboard-greeting">
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-      </div>
+      {(title || subtitle) && (
+        <div className="dashboard-greeting">
+          {title && <h1>{title}</h1>}
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+      )}
     </header>
   )
 }

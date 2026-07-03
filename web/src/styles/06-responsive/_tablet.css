@@ -47,7 +47,8 @@
   }
 
   /* Dashboard Shell & Sidebar */
-  .dashboard-shell {
+  .dashboard-shell,
+  .dashboard-shell.sidebar-collapsed {
     grid-template-columns: 1fr;
   }
 
@@ -120,4 +121,82 @@
   .play-mode-grid {
     max-width: 720px;
   }
+
+  /* Active Game View Overrides */
+  .play-shell.game-active,
+  .play-shell.game-active .dashboard-main {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .play-shell.game-active .dashboard-header {
+    display: flex;
+  }
+
+  .sidebar-collapsed .dashboard-sidebar {
+    width: 280px !important;
+    padding: 28px 16px 20px !important;
+  }
+
+  .sidebar-collapsed .logo__text {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: auto !important;
+    display: inline-flex !important;
+  }
+
+  .sidebar-collapsed .sidebar-nav-item span {
+    display: inline !important;
+  }
+
+  .sidebar-collapsed .sidebar-user-info {
+    display: flex !important;
+  }
+
+  .sidebar-collapsed .sidebar-logout span {
+    display: inline !important;
+  }
+
+  .sidebar-collapsed .sidebar-brand-wrapper {
+    flex-direction: row !important;
+    padding: 0 8px 20px !important;
+    gap: 0 !important;
+    justify-content: space-between !important;
+  }
+
+  .game-main {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .board-section {
+    height: auto;
+    padding: 12px 8px;
+    overflow: visible;
+    flex: none;
+  }
+
+  .board-container {
+    width: min(92vw, 440px);
+    aspect-ratio: 1 / 1.25;
+  }
+
+  .controls-section {
+    width: 100%;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #303539;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  .move-history-container {
+    max-height: 220px;
+    min-height: 140px;
+    overflow-y: auto;
+  }
 }
+
