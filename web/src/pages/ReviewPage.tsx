@@ -15,6 +15,8 @@ import PlayerInfoBar from '../components/play/PlayerInfoBar'
 import MoveList from '../components/play/MoveList'
 import MoveNavBar from '../components/play/MoveNavBar'
 import BoardWrapper from '../components/play/BoardWrapper'
+import { useAuth } from '../context/AuthContext'
+import { useSettings } from '../context/SettingsContext'
 import { evalToPercent, formatEval, getKingSquareInCheck, playChessSound } from '../utils/chessHelpers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -234,16 +236,11 @@ const ReviewPage = () => {
   const pendingLinesRef = useRef<Map<number, Partial<TopLine>>>(new Map())
   const analyzeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  let username = 'Player'
-  let userEmail = ''
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const u = JSON.parse(stored)
-      username = u.username || 'Player'
-      userEmail = u.email || ''
-    }
-  } catch { /* ignore */ }
+  const { user } = useAuth()
+  const { volume } = useSettings()
+
+  const username = user?.username || 'Player'
+  const userEmail = user?.email || ''
 
   const isEngine = game?.game_type === 'engine'
   let isUserWhite = true
@@ -254,15 +251,6 @@ const ReviewPage = () => {
       isUserWhite = game.white_email?.toLowerCase() === userEmail.toLowerCase()
     }
   }
-
-  const [volume] = useState<number>(() => {
-    try {
-      const stored = localStorage.getItem('chessVolume')
-      return stored ? parseFloat(stored) : 0.5
-    } catch {
-      return 0.5
-    }
-  })
 
   // ── Build FEN history from PGN on mount ──────────────────────────────────
   useEffect(() => {

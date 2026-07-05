@@ -56,7 +56,7 @@ export function evalToPercent(cp: number): number {
  * Play a chess sound effect.
  */
 export function playChessSound(
-  type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal' | 'resign',
+  type: 'move-self' | 'move-opponent' | 'capture' | 'check' | 'checkmate' | 'illegal' | 'resign' | 'draw' | 'aborted',
   volume = 0.5
 ) {
   try {
@@ -67,6 +67,8 @@ export function playChessSound(
       'check': '/sounds/move-check.mp3',
       'checkmate': '/sounds/game-end.mp3',
       'resign': '/sounds/game-end.mp3',
+      'draw': '/sounds/game-end.mp3',
+      'aborted': '/sounds/game-end.mp3',
       'illegal': '/sounds/notify.mp3',
     }
     const audio = new Audio(soundPaths[type])

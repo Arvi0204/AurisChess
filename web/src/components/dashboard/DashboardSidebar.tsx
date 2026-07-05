@@ -12,7 +12,7 @@ import {
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import logo from '../../assets/aurischess-logo.svg'
-import { supabase } from '../../config/supabaseClient'
+import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { icon: Home, label: 'Home', href: '/dashboard' },
@@ -22,44 +22,27 @@ const navItems = [
 ]
 
 type DashboardSidebarProps = {
-  username: string
+  username?: string
   isCollapsed?: boolean
   onToggleCollapse?: () => void
 }
 
 const DashboardSidebar = ({
-  username,
   isCollapsed = false,
   onToggleCollapse,
 }: DashboardSidebarProps) => {
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('user')
+    await logout()
     navigate('/')
   }
 
-
-  // Read username and avatarUrl from localStorage if available
-  let displayUsername = username
-  let avatarUrl = ''
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const user = JSON.parse(stored)
-      avatarUrl = user.avatar_url || ''
-      if (!username || username === 'Player') {
-        displayUsername = user.username || 'Player'
-      }
-    }
-  } catch {
-    // ignore
-  }
-
+  const displayUsername = user?.username || 'Player'
+  const avatarUrl = user?.avatar_url || ''
   const initial = displayUsername.charAt(0).toUpperCase()
 
   return (

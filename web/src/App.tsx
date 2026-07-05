@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
 import { Toaster } from 'react-hot-toast'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
@@ -8,18 +7,20 @@ import LearnPage from './pages/LearnPage'
 import PlayPage from './pages/PlayPage'
 import ProfilePage from './pages/ProfilePage'
 import ReviewPage from './pages/ReviewPage'
-import { supabase } from './config/supabaseClient'
-import { API_BASE } from './config/api'
-
-function isLoggedIn(): boolean {
-  const token = localStorage.getItem('authToken')
-  const user = localStorage.getItem('user')
-  return Boolean(token && user)
-}
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { SettingsProvider } from './context/SettingsContext'
 
 // Route guard for authenticated pages
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  if (!isLoggedIn()) {
+  const { user, isLoading } = useAuth()
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0b0f12', color: '#ffffff' }}>
+        <div style={{ fontSize: '0.9rem', opacity: 0.8, letterSpacing: '0.05em' }}>CONNECTING...</div>
+      </div>
+    )
+  }
+  if (!user) {
     return <Navigate to="/auth" replace />
   }
   return <>{children}</>
@@ -27,96 +28,34 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Route guard for guest/public pages (redirects logged-in users away from login/signup)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  if (isLoggedIn()) {
+  const { user, isLoading } = useAuth()
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0b0f12', color: '#ffffff' }}>
+        <div style={{ fontSize: '0.9rem', opacity: 0.8, letterSpacing: '0.05em' }}>CONNECTING...</div>
+      </div>
+    )
+  }
+  if (user) {
     return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
 }
 
-const App = () => {
-  // Use state to trigger re-renders when auth state changes
-  const [, setSessionState] = useState<any>(null)
+// Root page redirect logic based on session state
+const RootRoute = () => {
+  const { user, isLoading } = useAuth()
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0b0f12', color: '#ffffff' }}>
+        <div style={{ fontSize: '0.9rem', opacity: 0.8, letterSpacing: '0.05em' }}>CONNECTING...</div>
+      </div>
+    )
+  }
+  return user ? <Navigate to="/dashboard" replace /> : <HomePage />
+}
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        localStorage.setItem('authToken', session.access_token)
-        
-        // Preserve locally stored avatar_url if any exists
-        let existingAvatar = ''
-        try {
-          const stored = localStorage.getItem('user')
-          if (stored) {
-            existingAvatar = JSON.parse(stored).avatar_url || ''
-          }
-        } catch {
-          // ignore
-        }
-
-        const user = {
-          id: session.user.id,
-          email: session.user.email,
-          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Player',
-          avatar_url: session.user.user_metadata?.avatar_url || existingAvatar || ''
-        }
-        localStorage.setItem('user', JSON.stringify(user))
-
-        // Asynchronously sync the username and avatar from the Postgres DB
-        fetch(`${API_BASE}/api/user/stats`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        })
-          .then(res => {
-            if (res.ok) return res.json()
-            throw new Error('Failed to fetch stats')
-          })
-          .then(resJson => {
-            if (resJson?.data?.user) {
-              const dbUser = resJson.data.user
-              const currentStored = localStorage.getItem('user')
-              let userObj = currentStored ? JSON.parse(currentStored) : user
-              
-              let changed = false
-              if (dbUser.username && dbUser.username !== userObj.username) {
-                userObj.username = dbUser.username
-                changed = true
-              }
-              if (dbUser.avatar_url && dbUser.avatar_url !== userObj.avatar_url) {
-                userObj.avatar_url = dbUser.avatar_url
-                changed = true
-              }
-              
-              if (changed) {
-                localStorage.setItem('user', JSON.stringify(userObj))
-                
-                // Also update Supabase metadata so it's persisted in the auth session
-                supabase.auth.updateUser({
-                  data: {
-                    username: userObj.username,
-                    avatar_url: userObj.avatar_url
-                  }
-                }).catch(e => console.error('Failed to sync auth metadata', e))
-              }
-            }
-          })
-          .catch(err => {
-            console.warn('Could not sync user details with Postgres DB:', err)
-          })
-
-      } else {
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('user')
-      }
-      // Trigger a state change to re-evaluate isLoggedIn across guards
-      setSessionState(session)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
+const AppContent = () => {
   return (
     <BrowserRouter>
       <Toaster
@@ -139,12 +78,7 @@ const App = () => {
         }}
       />
       <Routes>
-        <Route
-          path="/"
-          element={
-            isLoggedIn() ? <Navigate to="/dashboard" replace /> : <HomePage />
-          }
-        />
+        <Route path="/" element={<RootRoute />} />
         <Route
           path="/auth"
           element={
@@ -200,5 +134,14 @@ const App = () => {
   )
 }
 
-export default App
+const App = () => {
+  return (
+    <AuthProvider>
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
+    </AuthProvider>
+  )
+}
 
+export default App

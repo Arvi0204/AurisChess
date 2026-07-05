@@ -4,10 +4,12 @@ import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import PlayCard from '../components/dashboard/PlayCard'
 import QuickStats from '../components/dashboard/QuickStats'
 import RecentGames from '../components/dashboard/RecentGames'
+import { useAuth } from '../context/AuthContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const DashboardPage = () => {
+  const { user, token } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [stats, setStats] = useState<{
     totalGames: number | string
@@ -21,22 +23,11 @@ const DashboardPage = () => {
     ratingBlitz: '—',
   })
 
-  // Read user from localStorage (set during login/signup)
-  let username = 'Player'
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const user = JSON.parse(stored)
-      username = user.username || 'Player'
-    }
-  } catch {
-    // fallback to default
-  }
+  const username = user?.username || 'Player'
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('authToken')
         if (!token) return
 
         const response = await fetch(`${API_BASE}/api/user/stats`, {
@@ -61,8 +52,10 @@ const DashboardPage = () => {
       }
     }
 
-    fetchStats()
-  }, [])
+    if (token) {
+      fetchStats()
+    }
+  }, [token])
 
   return (
     <div className={`dashboard-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>

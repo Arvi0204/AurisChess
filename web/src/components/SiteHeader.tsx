@@ -1,31 +1,15 @@
 import { ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.svg'
+import { useAuth } from '../context/AuthContext'
 
 type SiteHeaderProps = {
   variant?: 'home' | 'auth'
 }
 
-function isLoggedIn(): boolean {
-  const token = localStorage.getItem('authToken')
-  const user = localStorage.getItem('user')
-  return Boolean(token && user)
-}
-
-function getUsername(): string {
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const user = JSON.parse(stored)
-      return user.username || 'Player'
-    }
-  } catch {
-    // fallback
-  }
-  return 'Player'
-}
-
 const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
+  const { user } = useAuth()
+
   if (variant === 'auth') {
     return (
       <header className="top-bar auth-top-bar">
@@ -41,7 +25,7 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
     )
   }
 
-  const loggedIn = isLoggedIn()
+  const loggedIn = !!user
 
   return (
     <header className="top-bar">
@@ -59,7 +43,7 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
         </nav>
         {loggedIn ? (
           <Link className="login-button" to="/dashboard">
-            {getUsername()}'s Dashboard
+            {user?.username}'s Dashboard
           </Link>
         ) : (
           <Link className="login-button" to="/auth">

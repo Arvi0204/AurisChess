@@ -14,6 +14,8 @@ import ProfileStatsTab from '../components/profile/ProfileStatsTab'
 import ProfileSettingsTab from '../components/profile/ProfileSettingsTab'
 import { supabase } from '../config/supabaseClient'
 import { API_BASE } from '../config/api'
+import { useAuth } from '../context/AuthContext'
+import { useSettings } from '../context/SettingsContext'
 
 type HistoryPoint = {
   rating: number
@@ -61,35 +63,20 @@ const ProfilePage = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [updatingPassword, setUpdatingPassword] = useState(false)
 
-  // Gameplay Settings States
-  const [volume, setVolume] = useState<number>(0.5)
-  const [promotionSetting, setPromotionSetting] = useState<'auto-queen' | 'selective'>('auto-queen')
+  // Auth and Settings Contexts
+  const { user, token, updateUser } = useAuth()
+  const { volume, setVolume, promotionSetting, setPromotionSetting } = useSettings()
 
   // Load user data and settings
   useEffect(() => {
     fetchProfileData()
-
-    // Initialize gameplay settings from localStorage
-    try {
-      const storedVolume = localStorage.getItem('chessVolume')
-      if (storedVolume !== null) {
-        setVolume(parseFloat(storedVolume))
-      }
-      const storedPromo = localStorage.getItem('chessPromotionSetting')
-      if (storedPromo === 'auto-queen' || storedPromo === 'selective') {
-        setPromotionSetting(storedPromo)
-      }
-    } catch (e) {
-      console.warn('Failed to load gameplay settings', e)
-    }
   }, [])
 
   const fetchProfileData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const token = localStorage.getItem('authToken')
-      if (!token) throw new Error('No authentication token found.')
+      if (!token) return
 
       const response = await fetch(`${API_BASE}/api/user/stats`, {
         headers: {
@@ -106,13 +93,11 @@ const ProfilePage = () => {
       setStats(resJson.data)
       setNewUsername(resJson.data.user.username)
 
-      // Sync avatar back into localStorage if updated
-      const stored = localStorage.getItem('user')
-      if (stored && resJson.data.user) {
-        const user = JSON.parse(stored)
-        user.avatar_url = resJson.data.user.avatar_url
-        user.username = resJson.data.user.username
-        localStorage.setItem('user', JSON.stringify(user))
+      if (resJson.data?.user) {
+        updateUser({
+          username: resJson.data.user.username,
+          avatar_url: resJson.data.user.avatar_url
+        })
       }
     } catch (err: any) {
       console.error('Error fetching profile:', err)
@@ -124,23 +109,12 @@ const ProfilePage = () => {
 
   // Handle Gameplay Volume Change
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVol = parseFloat(e.target.value)
-    setVolume(newVol)
-    try {
-      localStorage.setItem('chessVolume', newVol.toString())
-    } catch {
-      // ignore
-    }
+    setVolume(parseFloat(e.target.value))
   }
 
   // Handle Gameplay Promotion Setting Change
   const handlePromotionSettingChange = (val: 'auto-queen' | 'selective') => {
     setPromotionSetting(val)
-    try {
-      localStorage.setItem('chessPromotionSetting', val)
-    } catch {
-      // ignore
-    }
   }
 
   // Handle Username Update
@@ -149,7 +123,6 @@ const ProfilePage = () => {
     setUpdatingProfile(true)
 
     try {
-      const token = localStorage.getItem('authToken')
       if (!token) throw new Error('Unauthorized')
 
       const response = await fetch(`${API_BASE}/api/user/profile`, {
@@ -169,21 +142,8 @@ const ProfilePage = () => {
 
       const updatedUsername = resData.data?.user?.username || newUsername
 
-      // Sync with Supabase Auth metadata so the session JWT has the new username
-      const { error: supabaseError } = await supabase.auth.updateUser({
-        data: { username: updatedUsername }
-      })
-      if (supabaseError) {
-        console.error('Failed to sync username to Supabase Auth:', supabaseError)
-      }
-
-      // Update localStorage immediately so UI stays in sync
-      const stored = localStorage.getItem('user')
-      if (stored) {
-        const user = JSON.parse(stored)
-        user.username = updatedUsername
-        localStorage.setItem('user', JSON.stringify(user))
-      }
+      // Update auth context immediately (handles Supabase + localStorage update)
+      await updateUser({ username: updatedUsername })
 
       toast.success('Username updated successfully!')
       fetchProfileData() // Reload profile info
@@ -242,7 +202,6 @@ const ProfilePage = () => {
     setUpdatingProfile(true)
 
     try {
-      const token = localStorage.getItem('authToken')
       if (!token) throw new Error('Unauthorized')
 
       const response = await fetch(`${API_BASE}/api/user/profile`, {
@@ -262,21 +221,8 @@ const ProfilePage = () => {
 
       const updatedAvatarUrl = resData.data?.user?.avatar_url || base64DataUrl
 
-      // Sync with Supabase Auth metadata
-      const { error: supabaseError } = await supabase.auth.updateUser({
-        data: { avatar_url: updatedAvatarUrl }
-      })
-      if (supabaseError) {
-        console.error('Failed to sync avatar to Supabase Auth:', supabaseError)
-      }
-
-      // Update localStorage immediately so UI stays in sync
-      const stored = localStorage.getItem('user')
-      if (stored) {
-        const user = JSON.parse(stored)
-        user.avatar_url = updatedAvatarUrl
-        localStorage.setItem('user', JSON.stringify(user))
-      }
+      // Update auth context immediately (handles Supabase + localStorage update)
+      await updateUser({ avatar_url: updatedAvatarUrl })
 
       toast.success('Profile photo updated!')
       fetchProfileData() // Reload
@@ -321,15 +267,7 @@ const ProfilePage = () => {
 
 
 
-  // --- Render Layout ---
-  // Compute display username once per render (avoids IIFE in JSX)
-  const displayUsername = stats?.user.username ?? (() => {
-    try {
-      const stored = localStorage.getItem('user')
-      if (stored) return JSON.parse(stored).username || 'Player'
-    } catch { /* ignore */ }
-    return 'Player'
-  })()
+  const displayUsername = stats?.user.username || user?.username || 'Player'
 
   return (
     <div className={`dashboard-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>

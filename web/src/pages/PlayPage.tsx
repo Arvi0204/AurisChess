@@ -13,6 +13,8 @@ import { useChessVoiceControl } from '../hooks/useChessVoiceControl'
 import { useMultiplayerSocket } from '../hooks/useMultiplayerSocket'
 import { getKingSquareInCheck, playChessSound } from '../utils/chessHelpers'
 import { API_BASE } from '../config/api'
+import { useAuth } from '../context/AuthContext'
+import { useSettings } from '../context/SettingsContext'
 
 const engineLevels = [
   { id: 'easy', label: 'Easy', elo: '800' },
@@ -41,12 +43,8 @@ const PlayPage = () => {
   const [searchParams] = useSearchParams()
   const modeParam = searchParams.get('mode')
 
-  const [volume] = useState<number>(() => {
-    try {
-      const stored = localStorage.getItem('chessVolume')
-      return stored ? parseFloat(stored) : 0.5
-    } catch { return 0.5 }
-  })
+  const { user, token } = useAuth()
+  const { volume, promotionSetting } = useSettings()
 
   // ── Layout ────────────────────────────────────────────────────────────────
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -96,12 +94,6 @@ const PlayPage = () => {
   const [voiceStatus, setVoiceStatus] = useState('Click mic to start speaking moves')
 
   // ── Promotion states ──────────────────────────────────────────────────────
-  const [promotionSetting] = useState<'auto-queen' | 'selective'>(() => {
-    try {
-      const stored = localStorage.getItem('chessPromotionSetting')
-      return (stored === 'auto-queen' || stored === 'selective') ? stored : 'auto-queen'
-    } catch { return 'auto-queen' }
-  })
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
 
   const isPromotionMove = useCallback((from: string, to: string): boolean => {
@@ -162,21 +154,14 @@ const PlayPage = () => {
 
   // ── User info ─────────────────────────────────────────────────────────────
   const userInfo = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('user')
-      if (stored) {
-        const u = JSON.parse(stored)
-        return {
-          id: u.id || u.sub || null,
-          username: u.username || 'Player',
-          email: u.email || null,
-          ratingRapid: u.rating_rapid || 1200,
-          ratingBlitz: u.rating_blitz || 1200,
-        }
-      }
-    } catch { /* ignore */ }
-    return { id: null, username: 'Player', email: null, ratingRapid: 1200, ratingBlitz: 1200 }
-  }, [])
+    return {
+      id: user?.id || null,
+      username: user?.username || 'Player',
+      email: user?.email || null,
+      ratingRapid: (user as any)?.rating_rapid || 1200,
+      ratingBlitz: (user as any)?.rating_blitz || 1200,
+    }
+  }, [user])
 
   const username = userInfo.username
 
@@ -310,7 +295,12 @@ const PlayPage = () => {
     else if ((result === 'white' && isWhite) || (result === 'black' && !isWhite)) type = 'win'
     else type = 'loss'
     setGameResult({ type, reason })
-    playChessSound(type === 'win' ? 'checkmate' : type === 'loss' ? 'resign' : 'draw' as any, volume)
+    playChessSound(
+      type === 'win' ? 'checkmate' :
+      type === 'loss' ? 'resign' :
+      type === 'aborted' ? 'aborted' : 'draw',
+      volume
+    )
   }, [mp.gameResult, gameMode, volume])
 
   // ── Engine loading animation ──────────────────────────────────────────────
@@ -449,6 +439,7 @@ const PlayPage = () => {
       if (gameMode === 'computer' && elapsedMs >= INACTIVITY_LIMIT_MS) {
         setGameResult({ type: 'aborted', reason: 'Inactivity' })
         setAbortSecondsLeft(null)
+        playChessSound('aborted', volume)
       }
     }, 1000)
 
@@ -456,7 +447,7 @@ const PlayPage = () => {
       clearInterval(interval)
       setAbortSecondsLeft(null)
     }
-  }, [gameStarted, gameResult, gameMode, fenHistory.length])
+  }, [gameStarted, gameResult, gameMode, fenHistory.length, volume])
 
   // Keyboard navigation
   useEffect(() => {
@@ -568,7 +559,6 @@ const PlayPage = () => {
 
   const saveEngineGameToDb = async () => {
     try {
-      const token = localStorage.getItem('authToken')
       if (!token) return
       let resultStr: 'white' | 'black' | 'draw' = 'draw'
       if (gameResult?.type === 'win') resultStr = playerColor
@@ -697,8 +687,9 @@ const PlayPage = () => {
       else if (game.isThreefoldRepetition()) reason = 'Threefold repetition'
       else if (game.isInsufficientMaterial()) reason = 'Insufficient material'
       setGameResult({ type: 'draw', reason })
+      playChessSound('draw', volume)
     }
-  }, [])
+  }, [volume])
 
   const onDrop = useCallback(({ piece, sourceSquare, targetSquare }: { piece: any; sourceSquare: string; targetSquare: string | null }) => {
     if (gameResultRef.current || !targetSquare) return false

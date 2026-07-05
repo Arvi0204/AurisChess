@@ -15,6 +15,7 @@ import {
 import PageHeader from '../components/dashboard/PageHeader'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import { API_BASE } from '../config/api'
+import { useAuth } from '../context/AuthContext'
 
 type GameRecord = {
   id: number
@@ -102,16 +103,12 @@ const GameHistorySection = () => {
   const [filter, setFilter] = useState<FilterType>('all')
   const [currentPage, setCurrentPage] = useState(1)
 
-  let userEmail = ''
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) userEmail = JSON.parse(stored).email || ''
-  } catch { /* ignore */ }
+  const { user, token } = useAuth()
+  const userEmail = user?.email || ''
 
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const token = localStorage.getItem('authToken')
         if (!token) { setLoading(false); return }
 
         const res = await fetch(`${API_BASE}/api/user/games`, {
@@ -126,8 +123,10 @@ const GameHistorySection = () => {
         setLoading(false)
       }
     }
-    fetchGames()
-  }, [])
+    if (token) {
+      fetchGames()
+    }
+  }, [token])
 
   // Reset page to 1 whenever the filter changes
   useEffect(() => {
@@ -318,13 +317,10 @@ const GameHistorySection = () => {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const LearnPage = () => {
+  const { user } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
-  let username = 'Player'
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) username = JSON.parse(stored).username || 'Player'
-  } catch { /* ignore */ }
+  const username = user?.username || 'Player'
 
   return (
     <div className={`dashboard-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>

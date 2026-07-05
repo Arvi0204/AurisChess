@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Clock, Gamepad2, Copy, Check, Loader2, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE } from '../../config/api'
+import { useAuth } from '../../context/AuthContext'
 
 type GameRecord = {
   id: number
@@ -24,10 +25,11 @@ const RecentGames = () => {
   const [error, setError] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<number | null>(null)
 
+  const { user, token } = useAuth()
+
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const token = localStorage.getItem('authToken')
         if (!token) {
           setLoading(false)
           return
@@ -53,8 +55,10 @@ const RecentGames = () => {
       }
     }
 
-    fetchGames()
-  }, [])
+    if (token) {
+      fetchGames()
+    }
+  }, [token])
 
   const handleCopyPGN = (gameId: number, pgn: string) => {
     navigator.clipboard.writeText(pgn).then(() => {
@@ -65,17 +69,7 @@ const RecentGames = () => {
     })
   }
 
-  // Get current user email from localStorage
-  let userEmail = ''
-  try {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      const user = JSON.parse(stored)
-      userEmail = user.email || ''
-    }
-  } catch {
-    // fallback
-  }
+  const userEmail = user?.email || ''
 
   const formatGameDate = (dateStr: string) => {
     try {
