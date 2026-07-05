@@ -95,6 +95,38 @@ const PlayPage = () => {
   const [isVoiceActive, setIsVoiceActive] = useState(false)
   const [voiceStatus, setVoiceStatus] = useState('Click mic to start speaking moves')
 
+  // ── Promotion states ──────────────────────────────────────────────────────
+  const [promotionSetting] = useState<'auto-queen' | 'selective'>(() => {
+    try {
+      const stored = localStorage.getItem('chessPromotionSetting')
+      return (stored === 'auto-queen' || stored === 'selective') ? stored : 'auto-queen'
+    } catch { return 'auto-queen' }
+  })
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
+
+  const isPromotionMove = useCallback((from: string, to: string): boolean => {
+    try {
+      const moves = gameRef.current.moves({ square: from as any, verbose: true }) as any[]
+      return moves.some(m => m.to === to && m.promotion)
+    } catch {
+      return false
+    }
+  }, [])
+
+  const handlePromotionChoice = (pieceType: string) => {
+    if (!pendingPromotion) return
+    const { from, to } = pendingPromotion
+    const move = activeMakeMove({ from, to, promotion: pieceType })
+    if (!move) {
+      playChessSound('illegal', volume)
+    }
+    setPendingPromotion(null)
+  }
+
+  const handleCancelPromotion = () => {
+    setPendingPromotion(null)
+  }
+
   // ── Chess game refs ───────────────────────────────────────────────────────
   const gameRef = useRef(new Chess())
   const totalMovesRef = useRef(0)
@@ -675,6 +707,12 @@ const PlayPage = () => {
     const playerIsWhite = playerColorRef.current === 'white'
     const isMyTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
     if (isMyTurn) {
+      if (isPromotionMove(sourceSquare, targetSquare)) {
+        if (promotionSetting === 'selective') {
+          setPendingPromotion({ from: sourceSquare, to: targetSquare })
+          return false
+        }
+      }
       const move = activeMakeMove({ from: sourceSquare, to: targetSquare, promotion: 'q' })
       if (!move) playChessSound('illegal', volume)
       return !!move
@@ -687,7 +725,7 @@ const PlayPage = () => {
     }
     return false
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMoveIndex, volume, activeMakeMove, gameMode])
+  }, [currentMoveIndex, volume, activeMakeMove, gameMode, isPromotionMove, promotionSetting])
 
   const onSquareClick = useCallback(({ square }: { piece?: any; square: string }) => {
     if (gameResultRef.current) return
@@ -710,6 +748,13 @@ const PlayPage = () => {
     }
     if (selectedSquare) {
       if (selectedSquare === square) { setSelectedSquare(null); return }
+      if (isPromotionMove(selectedSquare, square)) {
+        if (promotionSetting === 'selective') {
+          setPendingPromotion({ from: selectedSquare, to: square })
+          setSelectedSquare(null)
+          return
+        }
+      }
       const move = activeMakeMove({ from: selectedSquare, to: square, promotion: 'q' })
       if (move) {
         setSelectedSquare(null)
@@ -816,6 +861,13 @@ const PlayPage = () => {
     offerDraw: gameMode === 'online' ? mp.offerDraw : undefined,
     drawOffer: gameMode === 'online' ? mp.drawOffer : undefined,
     respondDraw: gameMode === 'online' ? mp.respondDraw : undefined,
+    promotionSetting,
+    handlePromotionSelect: (from: string, to: string) => {
+      setPendingPromotion({ from, to })
+    },
+    hasPendingPromotion: !!pendingPromotion,
+    handlePromotionChoice,
+    handleCancelPromotion,
   })
 
   // ── Square styles ─────────────────────────────────────────────────────────
@@ -963,6 +1015,37 @@ const PlayPage = () => {
               respondDraw={gameMode === 'online' ? mp.respondDraw : undefined}
               opponentDisconnected={!!mp.opponentDisconnected}
             />
+
+            {/* Pawn Promotion Modal Overlay */}
+            {pendingPromotion && (
+              <div className="promotion-overlay" role="dialog" aria-modal="true" aria-label="Pawn Promotion Selection">
+                <div className="promotion-card glass-panel animate-fade-in">
+                  <h3>Pawn Promotion</h3>
+                  <p className="promotion-desc">Select a piece to promote your pawn to:</p>
+                  <div className="promotion-options">
+                    <button onClick={() => handlePromotionChoice('q')} className="promotion-option-btn" aria-label="Promote to Queen">
+                      <span className="piece-icon" style={playerColor === 'white' ? { color: '#f0f3f5' } : { color: '#1a1f24' }}>♛</span>
+                      <span>Queen</span>
+                    </button>
+                    <button onClick={() => handlePromotionChoice('r')} className="promotion-option-btn" aria-label="Promote to Rook">
+                      <span className="piece-icon" style={playerColor === 'white' ? { color: '#f0f3f5' } : { color: '#1a1f24' }}>♜</span>
+                      <span>Rook</span>
+                    </button>
+                    <button onClick={() => handlePromotionChoice('b')} className="promotion-option-btn" aria-label="Promote to Bishop">
+                      <span className="piece-icon" style={playerColor === 'white' ? { color: '#f0f3f5' } : { color: '#1a1f24' }}>♝</span>
+                      <span>Bishop</span>
+                    </button>
+                    <button onClick={() => handlePromotionChoice('n')} className="promotion-option-btn" aria-label="Promote to Knight">
+                      <span className="piece-icon" style={playerColor === 'white' ? { color: '#f0f3f5' } : { color: '#1a1f24' }}>♞</span>
+                      <span>Knight</span>
+                    </button>
+                  </div>
+                  <button onClick={handleCancelPromotion} className="promotion-cancel-btn">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Game Result Modal */}
             {gameResult && showResultModal && (

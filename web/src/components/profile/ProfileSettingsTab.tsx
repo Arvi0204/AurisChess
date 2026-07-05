@@ -22,6 +22,10 @@ type ProfileSettingsTabProps = {
   // Volume control props
   volume: number
   handleVolumeChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+
+  // Promotion setting props
+  promotionSetting: 'auto-queen' | 'selective'
+  handlePromotionSettingChange: (val: 'auto-queen' | 'selective') => void
 }
 
 const ProfileSettingsTab = ({
@@ -38,7 +42,9 @@ const ProfileSettingsTab = ({
   updatingPassword,
   handlePasswordChange,
   volume,
-  handleVolumeChange
+  handleVolumeChange,
+  promotionSetting,
+  handlePromotionSettingChange
 }: ProfileSettingsTabProps) => {
   return (
     <div className="profile-settings-tab animate-fade-in">
@@ -180,6 +186,36 @@ const ProfileSettingsTab = ({
               <p className="volume-explanation">
                 This volume applies to all move cues, checks, captures, and chess game notifications.
               </p>
+            </div>
+          </div>
+
+          <div className="settings-form-card glass-panel">
+            <h3>Pawn Promotion Preference</h3>
+            <p className="sub-description">
+              Choose how your pawns promote when reaching the back rank.
+            </p>
+
+            <div className="settings-promotion-control">
+              <label className="settings-radio-label">
+                <input
+                  type="radio"
+                  name="promotionSetting"
+                  value="auto-queen"
+                  checked={promotionSetting === 'auto-queen'}
+                  onChange={() => handlePromotionSettingChange('auto-queen')}
+                />
+                <span>Auto-Queen (Default)</span>
+              </label>
+              <label className="settings-radio-label">
+                <input
+                  type="radio"
+                  name="promotionSetting"
+                  value="selective"
+                  checked={promotionSetting === 'selective'}
+                  onChange={() => handlePromotionSettingChange('selective')}
+                />
+                <span>Selective (Choose piece on promotion)</span>
+              </label>
             </div>
           </div>
         </div>

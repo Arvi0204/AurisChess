@@ -63,6 +63,7 @@ const ProfilePage = () => {
 
   // Gameplay Settings States
   const [volume, setVolume] = useState<number>(0.5)
+  const [promotionSetting, setPromotionSetting] = useState<'auto-queen' | 'selective'>('auto-queen')
 
   // Load user data and settings
   useEffect(() => {
@@ -74,8 +75,12 @@ const ProfilePage = () => {
       if (storedVolume !== null) {
         setVolume(parseFloat(storedVolume))
       }
+      const storedPromo = localStorage.getItem('chessPromotionSetting')
+      if (storedPromo === 'auto-queen' || storedPromo === 'selective') {
+        setPromotionSetting(storedPromo)
+      }
     } catch (e) {
-      console.warn('Failed to load volume setting', e)
+      console.warn('Failed to load gameplay settings', e)
     }
   }, [])
 
@@ -123,6 +128,16 @@ const ProfilePage = () => {
     setVolume(newVol)
     try {
       localStorage.setItem('chessVolume', newVol.toString())
+    } catch {
+      // ignore
+    }
+  }
+
+  // Handle Gameplay Promotion Setting Change
+  const handlePromotionSettingChange = (val: 'auto-queen' | 'selective') => {
+    setPromotionSetting(val)
+    try {
+      localStorage.setItem('chessPromotionSetting', val)
     } catch {
       // ignore
     }
@@ -451,6 +466,8 @@ const ProfilePage = () => {
                     handlePasswordChange={handlePasswordChange}
                     volume={volume}
                     handleVolumeChange={handleVolumeChange}
+                    promotionSetting={promotionSetting}
+                    handlePromotionSettingChange={handlePromotionSettingChange}
                   />
                 )}
               </section>

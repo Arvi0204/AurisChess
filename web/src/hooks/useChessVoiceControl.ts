@@ -26,6 +26,11 @@ interface VoiceControlProps {
   offerDraw?: () => void;
   drawOffer?: { by: string } | null;
   respondDraw?: (accepted: boolean) => void;
+  promotionSetting: 'auto-queen' | 'selective';
+  handlePromotionSelect: (from: string, to: string) => void;
+  hasPendingPromotion?: boolean;
+  handlePromotionChoice?: (pieceType: string) => void;
+  handleCancelPromotion?: () => void;
 }
 
 export const useChessVoiceControl = ({
@@ -43,6 +48,11 @@ export const useChessVoiceControl = ({
   offerDraw,
   drawOffer,
   respondDraw,
+  promotionSetting,
+  handlePromotionSelect,
+  hasPendingPromotion,
+  handlePromotionChoice,
+  handleCancelPromotion,
 }: VoiceControlProps) => {
   // Refs for the audio pipeline
   const mediaStreamRef    = useRef<MediaStream | null>(null);
@@ -63,15 +73,17 @@ export const useChessVoiceControl = ({
   const refs = useRef({
     game, makeMove, setBlindfoldMode, setShowResignConfirm,
     showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
-    offerDraw, drawOffer, respondDraw,
+    offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
+    hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
   });
   useEffect(() => {
     refs.current = {
       game, makeMove, setBlindfoldMode, setShowResignConfirm,
       showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
-      offerDraw, drawOffer, respondDraw,
+      offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
+      hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
     };
-  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw]);
+  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect, hasPendingPromotion, handlePromotionChoice, handleCancelPromotion]);
 
   useEffect(() => { isActiveRef.current = isVoiceActive; }, [isVoiceActive]);
 
@@ -129,6 +141,26 @@ export const useChessVoiceControl = ({
     console.log(`[Voice] Raw: "${rawText}"`);
     console.log(`[Voice] Normalized: "${cleanText}"`);
     current.setVoiceStatus(`Heard: "${rawText}"`);
+
+    // ── Pending Promotion Flow ──────────────────────────────────────────────
+    if (current.hasPendingPromotion && current.handlePromotionChoice && current.handleCancelPromotion) {
+      const namedPieces = ['knight','bishop','rook','queen'];
+      const spokenPiece = namedPieces.find(p => cleanText.includes(p)) ?? null;
+      if (spokenPiece) {
+        const promoChar = spokenPiece === 'knight' ? 'n' : spokenPiece[0];
+        speakText(`Promoting to ${spokenPiece}.`);
+        current.handlePromotionChoice(promoChar);
+        return;
+      }
+      if (cleanText.match(/\b(cancel|no|stop|reject|back)\b/)) {
+        speakText('Promotion cancelled.');
+        current.handleCancelPromotion();
+        return;
+      }
+      speakText('Please say Queen, Rook, Bishop, Knight, or Cancel.');
+      current.setVoiceStatus('Waiting for piece: say Queen, Rook, Bishop, Knight, or Cancel');
+      return;
+    }
 
     // ── Chess-intent check ──────────────────────────────────────────────────
     // Only fire TTS feedback if the transcript contains something chess-like.
@@ -243,12 +275,14 @@ export const useChessVoiceControl = ({
       const spokenPiece = namedPieces.find(p => cleanText.includes(p)) ?? null;
 
       if (spokenPiece) {
+        const promotionPieceName = move.promotion ? getPieceFullName(move.promotion) : null;
         // User named a piece — hard-filter: wrong piece type gets eliminated
-        if (pieceName !== spokenPiece && !(spokenPiece === 'castle' && pieceName === 'rook')) {
-          // Exception: allow castle keyword to match rook-based castling moves below
-          if (!(move.san === 'O-O' || move.san === 'O-O-O')) {
-            continue; // skip entirely — user said a different piece name
-          }
+        // Allow match if it matches the moving piece type OR the promotion piece type
+        const matchesPiece = pieceName === spokenPiece || (promotionPieceName && promotionPieceName === spokenPiece);
+        const isCastlingException = spokenPiece === 'castle' && (move.san === 'O-O' || move.san === 'O-O-O');
+
+        if (!matchesPiece && !isCastlingException) {
+          continue; // skip entirely — user said a different piece name
         } else {
           score += 8; // correct piece name bonus
         }
@@ -271,17 +305,57 @@ export const useChessVoiceControl = ({
       if (score > 0) scored.push({ move, score });
     }
 
-    scored.sort((a, b) => b.score - a.score);
+    // Filter out duplicate promotion candidates for the exact same source/target squares
+    // to prevent coordinates-tie ambiguities in promotion.
+    const uniqueCandidates: typeof scored = [];
+    for (const item of scored) {
+      const isDuplicate = uniqueCandidates.some(
+        u => u.move.from === item.move.from && u.move.to === item.move.to
+      );
+      if (!isDuplicate) {
+        // Find all candidates for this same from -> to
+        const matches = scored.filter(
+          s => s.move.from === item.move.from && s.move.to === item.move.to
+        );
 
-    if (scored.length > 0) {
-      console.log('[Voice] Candidates:', scored.map(c => `${c.move.san}(${c.score})`).join(', '));
+        if (matches.length === 1) {
+          uniqueCandidates.push(item);
+        } else {
+          // It's a promotion move with multiple candidates.
+          // Let's see if any matches the spoken piece (if specified).
+          const spokenPiece = ['knight','bishop','rook','queen'].find(p => cleanText.includes(p)) ?? null;
+          let selected = matches.find(m => {
+            const promo = m.move.promotion;
+            if (!promo) return false;
+            const fullName = getPieceFullName(promo);
+            return fullName === spokenPiece;
+          });
+
+          // If no spoken piece matches, default to Queen ('q')
+          if (!selected) {
+            selected = matches.find(m => m.move.promotion === 'q');
+          }
+
+          if (selected) {
+            uniqueCandidates.push(selected);
+          } else {
+            uniqueCandidates.push(item); // fallback
+          }
+        }
+      }
+    }
+
+    uniqueCandidates.sort((a, b) => b.score - a.score);
+
+    if (uniqueCandidates.length > 0) {
+      console.log('[Voice] Candidates:', uniqueCandidates.map(c => `${c.move.san}(${c.score})`).join(', '));
     } else {
       console.log('[Voice] No candidates matched');
     }
 
-    if (scored.length > 0 && scored[0].score >= 10) {
-      const top = scored[0];
-      const ties = scored.filter(c => c.score === top.score);
+    if (uniqueCandidates.length > 0 && uniqueCandidates[0].score >= 10) {
+      const top = uniqueCandidates[0];
+      const ties = uniqueCandidates.filter(c => c.score === top.score);
       if (ties.length > 1) {
         // Only speak ambiguity if there was genuine chess intent
         if (hasChessIntent) {
@@ -290,10 +364,41 @@ export const useChessVoiceControl = ({
         }
       } else {
         console.log(`[Voice] Move: ${top.move.san}`);
-        const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: 'q' });
-        if (result) {
-          speakText(top.move.san);
-          current.setVoiceStatus(`Played: ${top.move.san}`);
+        // If it is a promotion move, handle the promotion preference:
+        if (top.move.promotion) {
+          // Check if the user specified a promotion piece in their voice command
+          const spokenPiece = ['knight','bishop','rook','queen'].find(p => cleanText.includes(p)) ?? null;
+          if (spokenPiece) {
+            // User explicitly requested a piece, execute immediately
+            const promoChar = spokenPiece === 'knight' ? 'n' : spokenPiece[0];
+            const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: promoChar });
+            if (result) {
+              speakText(top.move.san);
+              current.setVoiceStatus(`Played: ${top.move.san}`);
+            }
+          } else {
+            // No piece specified in voice command. Use setting preference.
+            if (current.promotionSetting === 'selective') {
+              // Trigger screen selection overlay
+              current.handlePromotionSelect(top.move.from, top.move.to);
+              speakText('Please select promotion piece on screen.');
+              current.setVoiceStatus('Select promotion piece on screen.');
+            } else {
+              // Auto-queen
+              const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: 'q' });
+              if (result) {
+                speakText(top.move.san);
+                current.setVoiceStatus(`Played: ${top.move.san}`);
+              }
+            }
+          }
+        } else {
+          // Standard non-promotion move
+          const result = current.makeMove({ from: top.move.from, to: top.move.to });
+          if (result) {
+            speakText(top.move.san);
+            current.setVoiceStatus(`Played: ${top.move.san}`);
+          }
         }
       }
       return;
