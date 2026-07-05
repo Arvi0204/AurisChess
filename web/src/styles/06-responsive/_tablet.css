@@ -180,8 +180,11 @@
   }
 
   .board-container {
-    width: min(92vw, 440px);
-    aspect-ratio: 1 / 1.25;
+    width: min(90vw, 420px);
+    /* Do NOT set aspect-ratio here — board-wrapper enforces 1:1 square.
+       Letting the container size to its contents prevents the board from
+       being cut off when player-info bars are stacked above/below. */
+    aspect-ratio: unset;
   }
 
   .controls-section {

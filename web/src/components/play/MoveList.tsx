@@ -24,11 +24,23 @@ const MoveList = ({
 }: MoveListProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll active move into view
+  // Auto-scroll active move into view — scroll the container itself directly
+  // so the page-level scroll is NOT affected (critical for mobile vertical layout).
   useEffect(() => {
-    if (containerRef.current) {
-      const active = containerRef.current.querySelector('.move-val--active')
-      active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const container = containerRef.current
+    if (!container) return
+    const active = container.querySelector<HTMLElement>('.move-val--active')
+    if (!active) return
+
+    const containerTop = container.getBoundingClientRect().top
+    const activeTop = active.getBoundingClientRect().top
+    const activeBottom = active.getBoundingClientRect().bottom
+    const containerBottom = container.getBoundingClientRect().bottom
+
+    // Only scroll if the active element is outside the visible area
+    if (activeTop < containerTop || activeBottom > containerBottom) {
+      const offset = active.offsetTop - container.offsetTop
+      container.scrollTo({ top: offset - container.clientHeight / 2, behavior: 'smooth' })
     }
   }, [currentIndex])
 

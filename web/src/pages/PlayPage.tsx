@@ -226,6 +226,7 @@ const PlayPage = () => {
     setSelectedSquare(null)
     setGameMode('online')
     setGameStarted(true)
+    setBlindfoldMode(false)
     totalMovesRef.current = 0
     blindfoldMovesRef.current = 0
     setIsVoiceActive(true)
@@ -809,6 +810,7 @@ const PlayPage = () => {
     setIsVoiceActive(false)
     setVoiceStatus('Click mic to start speaking moves')
     setOpponentInfo(null)
+    setBlindfoldMode(false)
     if (stockfishRef.current) { stockfishRef.current.terminate(); stockfishRef.current = null }
     totalMovesRef.current = 0
     blindfoldMovesRef.current = 0
