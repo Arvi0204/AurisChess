@@ -110,6 +110,35 @@ export const useChessVoiceControl = ({
     }
   };
 
+  // ─── SAN → natural spoken English ─────────────────────────────────────────────
+  const sanToSpeech = (san: string): string => {
+    const pieceNames: Record<string, string> = {
+      K: 'King', Q: 'Queen', R: 'Rook', B: 'Bishop', N: 'Knight',
+    };
+    if (san === 'O-O-O') return 'Castles queenside';
+    if (san === 'O-O')   return 'Castles kingside';
+    const isCheckmate = san.endsWith('#');
+    const isCheck     = !isCheckmate && san.endsWith('+');
+    const base        = san.replace(/[+#]/g, '');
+    const suffix      = isCheckmate ? ', checkmate' : isCheck ? ', check' : '';
+    // Promotion: e8=Q
+    const promoMatch = base.match(/^([a-h][1-8])=([QRBN])$/);
+    if (promoMatch) return `${promoMatch[1]} promotes to ${pieceNames[promoMatch[2]] ?? promoMatch[2]}${suffix}`;
+    // Piece capture: Nxf3
+    const pieceCapture = base.match(/^([KQRBN])([a-h]?[1-8]?)x([a-h][1-8])$/);
+    if (pieceCapture) return `${pieceNames[pieceCapture[1]] ?? pieceCapture[1]} captures on ${pieceCapture[3]}${suffix}`;
+    // Pawn capture: exd5
+    const pawnCapture = base.match(/^([a-h])x([a-h][1-8])$/);
+    if (pawnCapture) return `Pawn captures on ${pawnCapture[2]}${suffix}`;
+    // Piece move: Nf3, Rhe1
+    const pieceMove = base.match(/^([KQRBN])([a-h]?[1-8]?)([a-h][1-8])$/);
+    if (pieceMove) return `${pieceNames[pieceMove[1]] ?? pieceMove[1]} to ${pieceMove[3]}${suffix}`;
+    // Pawn push: e4
+    const pawnMove = base.match(/^([a-h][1-8])$/);
+    if (pawnMove) return `${pawnMove[1]}${suffix}`;
+    return san;
+  };
+
   // ─── Text normalisation ───────────────────────────────────────────────────
   const normalizeTranscript = (text: string): string => {
     let clean = text.toLowerCase().trim();
@@ -359,7 +388,10 @@ export const useChessVoiceControl = ({
       if (ties.length > 1) {
         // Only speak ambiguity if there was genuine chess intent
         if (hasChessIntent) {
-          speakText('Ambiguous move. Please specify the starting square.');
+          const ambigMsg = 'Ambiguous move. Please specify the starting square.';
+          // Pre-block mic so the spoken phrase is not picked up and re-transcribed
+          ttsBlockUntilRef.current = Date.now() + ambigMsg.split(' ').length * 400 + 1500;
+          speakText(ambigMsg);
           current.setVoiceStatus('Ambiguous move. Try specifying the starting square.');
         }
       } else {
@@ -373,7 +405,7 @@ export const useChessVoiceControl = ({
             const promoChar = spokenPiece === 'knight' ? 'n' : spokenPiece[0];
             const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: promoChar });
             if (result) {
-              speakText(top.move.san);
+              speakText(sanToSpeech(top.move.san));
               current.setVoiceStatus(`Played: ${top.move.san}`);
             }
           } else {
@@ -387,7 +419,7 @@ export const useChessVoiceControl = ({
               // Auto-queen
               const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: 'q' });
               if (result) {
-                speakText(top.move.san);
+                speakText(sanToSpeech(top.move.san));
                 current.setVoiceStatus(`Played: ${top.move.san}`);
               }
             }
@@ -396,7 +428,7 @@ export const useChessVoiceControl = ({
           // Standard non-promotion move
           const result = current.makeMove({ from: top.move.from, to: top.move.to });
           if (result) {
-            speakText(top.move.san);
+            speakText(sanToSpeech(top.move.san));
             current.setVoiceStatus(`Played: ${top.move.san}`);
           }
         }
@@ -406,7 +438,10 @@ export const useChessVoiceControl = ({
 
     // Only say "illegal move" if there was genuine chess intent, not random words
     if (hasChessIntent) {
-      speakText('Illegal move or not recognized.');
+      const illegalMsg = 'Illegal move or not recognized.';
+      // Pre-block mic so the spoken phrase is not picked up and re-transcribed
+      ttsBlockUntilRef.current = Date.now() + illegalMsg.split(' ').length * 400 + 1500;
+      speakText(illegalMsg);
       current.setVoiceStatus(`No legal move matched: "${rawText}"`);
     } else {
       silentFail('scored candidates below threshold');
@@ -611,4 +646,6 @@ export const useChessVoiceControl = ({
       stopPipeline();
     };
   }, [isVoiceActive, startPipeline, stopPipeline, gameResult]);
+
+  return { speakText, sanToSpeech };
 };

@@ -250,7 +250,13 @@ const PlayPage = () => {
     // Opponent's move — apply to local chess.js
     try {
       const move = gameRef.current.move({ from, to, promotion: 'q' })
-      if (move) updateGameStateAfterMove(true)
+      if (move) {
+        updateGameStateAfterMove(true)
+        // Narrate opponent move when voice is active or blindfold mode is on
+        if (isVoiceActiveRef.current || blindfoldModeRef.current) {
+          narrateOpponentMoveRef.current(move.san)
+        }
+      }
     } catch (e) {
       console.warn('[Online] Failed to apply opponent move locally:', e)
     }
@@ -497,6 +503,10 @@ const PlayPage = () => {
       const move = gameRef.current.move({ from, to, promotion })
       if (move) {
         updateGameStateAfterMove()
+        // Narrate the engine's move when voice is active or blindfold mode is on
+        if (isVoiceActiveRef.current || blindfoldModeRef.current) {
+          narrateOpponentMoveRef.current(move.san)
+        }
         const queuedPremove = manualPremoveRef.current
         if (queuedPremove) {
           let premoveSucceeded = false
@@ -839,7 +849,14 @@ const PlayPage = () => {
   const isPlayerTurn = (turn === 'w' && playerIsWhite) || (turn === 'b' && !playerIsWhite)
 
   // ── Voice control hook ────────────────────────────────────────────────────
-  useChessVoiceControl({
+
+  // Stable ref so handleEngineMove / online-move effect can call it without
+  // stale closures (the hook hasn't been called yet at those call sites)
+  const narrateOpponentMoveRef = useRef<(san: string) => void>(() => {})
+  const isVoiceActiveRef = useRef(isVoiceActive)
+  useEffect(() => { isVoiceActiveRef.current = isVoiceActive }, [isVoiceActive])
+
+  const { speakText, sanToSpeech } = useChessVoiceControl({
     game: gameRef.current,
     makeMove: activeMakeMove,
     setBlindfoldMode,
@@ -862,6 +879,13 @@ const PlayPage = () => {
     handlePromotionChoice,
     handleCancelPromotion,
   })
+
+  // Wire up narrateOpponentMoveRef once speakText/sanToSpeech are available
+  useEffect(() => {
+    narrateOpponentMoveRef.current = (san: string) => speakText(sanToSpeech(san))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakText])
+
 
   // ── Square styles ─────────────────────────────────────────────────────────
   const currentLevel = engineLevels.find((l) => l.id === selectedLevel)
