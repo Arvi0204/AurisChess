@@ -6,7 +6,7 @@ export type PlayerRole = 'user' | 'ai' | 'opponent'
 export type PlayerInfoBarProps = {
   name: string
   role: PlayerRole
-  subtitle?: string        // e.g. "Elo 1200" or "Player"
+  subtitle?: React.ReactNode        // e.g. "Elo 1200" or custom rating node
   showClock?: boolean
   clockSeconds?: number
   isActiveTurn?: boolean

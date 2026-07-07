@@ -1023,6 +1023,8 @@ const PlayPage = () => {
               username={username}
               opponentName={resolvedOpponentName}
               opponentElo={resolvedOpponentElo}
+              playerElo={currentRating}
+              timeControlCategory={selectedTimeControl.startsWith('blitz') ? 'blitz' : 'rapid'}
               playerTime={playerTime}
               opponentTime={opponentTime}
               isPlayerTurn={isPlayerTurn}
@@ -1062,6 +1064,7 @@ const PlayPage = () => {
               drawOfferFrom={mp.drawOffer?.by || null}
               respondDraw={gameMode === 'online' ? mp.respondDraw : undefined}
               opponentDisconnected={!!mp.opponentDisconnected}
+              ownDrawOffer={mp.ownDrawOffer}
             />
 
             {/* Pawn Promotion Modal Overlay */}

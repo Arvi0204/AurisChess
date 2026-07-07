@@ -1,5 +1,5 @@
 import React from 'react'
-import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw, HelpCircle, X } from 'lucide-react'
+import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw, HelpCircle, X, Handshake, Flame } from 'lucide-react'
 import MoveList from './MoveList'
 import MoveNavBar from './MoveNavBar'
 
@@ -30,6 +30,7 @@ interface GameControlsPanelProps {
   drawOfferFrom?: string | null
   respondDraw?: (accepted: boolean) => void
   opponentDisconnected?: boolean
+  ownDrawOffer?: boolean
 }
 
 const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
@@ -57,6 +58,7 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
   respondDraw,
   opponentDisconnected = false,
   onShowResultModal,
+  ownDrawOffer = false,
 }) => {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
   const [isClosing, setIsClosing] = React.useState(false)
@@ -204,34 +206,32 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
           <div className="game-buttons-layout animate-fade-in">
             {/* Draw Offer banner if active */}
             {drawOfferFrom && respondDraw && (
-              <div className="draw-offer-banner animate-fade-in" style={{
-                marginBottom: '8px',
-                padding: '8px',
-                background: 'rgba(6, 182, 212, 0.15)',
-                border: '1px solid rgba(6, 182, 212, 0.3)',
-                borderRadius: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ fontSize: '0.8rem', color: '#e2e8f0' }}>
-                  {drawOfferFrom} offered a draw
-                </span>
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <div className="draw-offer-card animate-fade-in" role="dialog" aria-label="Draw Offer">
+                <div className="draw-offer-info">
+                  <div className="draw-offer-icon-wrapper">
+                    <span className="draw-fraction-icon" style={{ marginRight: 0 }} aria-hidden="true">½</span>
+                  </div>
+                  <div className="draw-offer-text">
+                    <span className="draw-offer-title">Draw Offered</span>
+                    <span className="draw-offer-desc">{drawOfferFrom} offered a draw.</span>
+                  </div>
+                </div>
+                <div className="draw-offer-buttons">
                   <button
-                    className="game-control-btn game-control-btn--resign-yes"
-                    style={{ flex: 1, padding: '4px 8px', fontSize: '0.75rem' }}
+                    type="button"
+                    className="draw-btn draw-btn-accept"
                     onClick={() => respondDraw(true)}
                   >
+                    <Handshake size={14} />
                     Accept
                   </button>
                   <button
-                    className="game-control-btn game-control-btn--resign-no"
-                    style={{ flex: 1, padding: '4px 8px', fontSize: '0.75rem' }}
+                    type="button"
+                    className="draw-btn draw-btn-decline"
                     onClick={() => respondDraw(false)}
                   >
-                    Decline
+                    <Flame size={14} />
+                    Fight On!
                   </button>
                 </div>
               </div>
@@ -258,12 +258,12 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
                 </button>
               ) : (
                 <button
-                  className="game-control-btn game-control-btn--takeback"
+                  className={`game-control-btn game-control-btn--takeback${ownDrawOffer ? ' game-control-btn--draw-pending' : ''}`}
                   onClick={offerDraw}
-                  disabled={moves.length < 2 || opponentDisconnected}
+                  disabled={moves.length < 2 || opponentDisconnected || ownDrawOffer}
                 >
-                  <RefreshCw size={14} />
-                  Offer Draw
+                  <span className="draw-fraction-icon" aria-hidden="true">½</span>
+                  {ownDrawOffer ? 'Draw Offered' : 'Offer Draw'}
                 </button>
               )}
             </div>

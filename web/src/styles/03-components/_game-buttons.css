@@ -143,3 +143,21 @@
   border-color: var(--color-cyan);
   box-shadow: 0 0 15px rgba(128, 207, 255, 0.4);
 }
+
+.game-control-btn--draw-pending {
+  border: 1px solid rgba(128, 207, 255, 0.4) !important;
+  color: var(--color-text-light) !important;
+  background: rgba(128, 207, 255, 0.12) !important;
+  opacity: 0.85 !important;
+  cursor: not-allowed !important;
+  animation: pulse-draw-btn 2s infinite ease-in-out;
+}
+
+@keyframes pulse-draw-btn {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+  }
+}

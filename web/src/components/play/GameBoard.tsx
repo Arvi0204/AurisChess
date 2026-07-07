@@ -1,4 +1,5 @@
 import React from 'react'
+import { Timer, Zap } from 'lucide-react'
 import PlayerInfoBar from './PlayerInfoBar'
 import BoardWrapper from './BoardWrapper'
 
@@ -17,6 +18,8 @@ interface GameBoardProps {
   username: string
   opponentName: string
   opponentElo: string | number
+  playerElo: string | number
+  timeControlCategory: 'rapid' | 'blitz'
   playerTime: number
   opponentTime: number
   isPlayerTurn: boolean
@@ -37,11 +40,46 @@ const GameBoard: React.FC<GameBoardProps> = ({
   username,
   opponentName,
   opponentElo,
+  playerElo,
+  timeControlCategory,
   playerTime,
   opponentTime,
   isPlayerTurn,
 }) => {
   const showClock = gameMode === 'online'
+
+  const renderPlayerElo = () => {
+    const Icon = timeControlCategory === 'blitz' ? Zap : Timer
+    return (
+      <span className="player-rating-span" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <Icon
+          size={12}
+          className={timeControlCategory === 'blitz' ? 'rating-icon--blitz' : 'rating-icon--rapid'}
+          style={{ color: timeControlCategory === 'blitz' ? 'var(--color-amber)' : 'var(--color-cyan)' }}
+          aria-hidden="true"
+        />
+        <span>Elo {playerElo}</span>
+      </span>
+    )
+  }
+
+  const renderOpponentElo = () => {
+    if (gameMode === 'computer') {
+      return `Elo ${opponentElo}`
+    }
+    const Icon = timeControlCategory === 'blitz' ? Zap : Timer
+    return (
+      <span className="player-rating-span" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <Icon
+          size={12}
+          className={timeControlCategory === 'blitz' ? 'rating-icon--blitz' : 'rating-icon--rapid'}
+          style={{ color: timeControlCategory === 'blitz' ? 'var(--color-amber)' : 'var(--color-cyan)' }}
+          aria-hidden="true"
+        />
+        <span>Elo {opponentElo}</span>
+      </span>
+    )
+  }
 
   // Top player configuration
   const renderTopPlayer = () => {
@@ -51,7 +89,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <PlayerInfoBar
           name={opponentName}
           role={gameMode === 'computer' ? 'ai' : 'opponent'}
-          subtitle={opponentElo ? `Elo ${opponentElo}` : undefined}
+          subtitle={opponentElo ? renderOpponentElo() : undefined}
           showClock={showClock}
           clockSeconds={opponentTime}
           isActiveTurn={showClock && !isPlayerTurn}
@@ -64,7 +102,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <PlayerInfoBar
           name={username}
           role="user"
-          subtitle="Player"
+          subtitle={renderPlayerElo()}
           showClock={showClock}
           clockSeconds={playerTime}
           isActiveTurn={showClock && isPlayerTurn}
@@ -81,7 +119,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <PlayerInfoBar
           name={username}
           role="user"
-          subtitle="Player"
+          subtitle={renderPlayerElo()}
           showClock={showClock}
           clockSeconds={playerTime}
           isActiveTurn={showClock && isPlayerTurn}
@@ -93,7 +131,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <PlayerInfoBar
           name={opponentName}
           role={gameMode === 'computer' ? 'ai' : 'opponent'}
-          subtitle={opponentElo ? `Elo ${opponentElo}` : undefined}
+          subtitle={opponentElo ? renderOpponentElo() : undefined}
           showClock={showClock}
           clockSeconds={opponentTime}
           isActiveTurn={showClock && !isPlayerTurn}

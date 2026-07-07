@@ -103,6 +103,7 @@ export function useMultiplayerSocket({
   const [matchmakingStatus, setMatchmakingStatus] = useState<string>('Searching for a worthy opponent…');
   const [lastAppliedMove, setLastAppliedMove] = useState<{ from: string; to: string; san: string } | null>(null);
   const [gameError, setGameError] = useState<string | null>(null);
+  const [ownDrawOffer, setOwnDrawOffer] = useState(false);
 
   // Keep refs for stable callbacks
   const matchInfoRef = useRef<MatchInfo | null>(null);
@@ -183,6 +184,7 @@ export function useMultiplayerSocket({
         }
       });
       setMatchState('playing');
+      setOwnDrawOffer(false);
     });
 
     socket.on('game:move-applied', (data: {
@@ -199,6 +201,7 @@ export function useMultiplayerSocket({
       setLiveTurn(data.turn);
       setServerClocks({ whiteTimeMs: data.whiteTimeMs, blackTimeMs: data.blackTimeMs });
       setLastAppliedMove({ from: data.from, to: data.to, san: data.san });
+      setOwnDrawOffer(false);
     });
 
     socket.on('game:move-rejected', ({ reason }: { reason: string }) => {
@@ -209,11 +212,13 @@ export function useMultiplayerSocket({
       setGameResult({ result: data.result, reason: data.reason });
       setServerClocks({ whiteTimeMs: data.whiteTimeMs, blackTimeMs: data.blackTimeMs });
       setMatchState('over');
+      setOwnDrawOffer(false);
     });
 
     socket.on('game:aborted', (data: { reason: string }) => {
       setGameResult({ result: 'aborted', reason: data.reason });
       setMatchState('over');
+      setOwnDrawOffer(false);
     });
 
     socket.on('game:rating-update', (data: RatingUpdate) => {
@@ -226,6 +231,7 @@ export function useMultiplayerSocket({
 
     socket.on('game:draw-declined', () => {
       setDrawOffer(null);
+      setOwnDrawOffer(false);
     });
 
     socket.on('game:opponent-disconnected', (data: OpponentDisconnected) => {
@@ -257,6 +263,7 @@ export function useMultiplayerSocket({
     setRatingUpdate(null);
     setDrawOffer(null);
     setOpponentDisconnected(null);
+    setOwnDrawOffer(false);
 
     // Wait for connection then emit
     const doJoin = () => {
@@ -280,6 +287,7 @@ export function useMultiplayerSocket({
     socketRef.current?.emit('matchmaking:cancel');
     setMatchState('idle');
     setMatchmakingStatus('Searching for a worthy opponent…');
+    setOwnDrawOffer(false);
   }, []);
 
   const sendMove = useCallback(({ from, to, promotion, isBlindfold }: MovePayload) => {
@@ -297,6 +305,7 @@ export function useMultiplayerSocket({
   const offerDraw = useCallback(() => {
     const info = matchInfoRef.current;
     if (!info) return;
+    setOwnDrawOffer(true);
     socketRef.current?.emit('game:draw-offer', { roomId: info.roomId });
   }, []);
 
@@ -338,6 +347,7 @@ export function useMultiplayerSocket({
     matchmakingStatus,
     lastAppliedMove,
     gameError,
+    ownDrawOffer,
     // Actions
     joinQueue,
     cancelQueue,
