@@ -199,6 +199,25 @@ const PlayPage = () => {
     return () => clearInterval(id)
   }, [mp.matchState])
 
+  // Reconnect to an in-progress online game on mount (e.g. after page reload)
+  useEffect(() => {
+    const saved = localStorage.getItem('activeOnlineGame')
+    if (!saved) return
+    try {
+      const { roomId } = JSON.parse(saved)
+      if (roomId) mp.reconnectToRoom(roomId)
+    } catch {
+      localStorage.removeItem('activeOnlineGame')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // If server returns a game:error after a reconnect attempt (e.g. room expired),
+  // clear the stale session so the user lands on the setup screen
+  useEffect(() => {
+    if (!mp.gameError) return
+    try { localStorage.removeItem('activeOnlineGame') } catch { /* ignore */ }
+  }, [mp.gameError])
+
   // When server sends game:state (playing), start the game
   useEffect(() => {
     if (mp.matchState !== 'playing' || !mp.liveFen || gameMode === 'online') return
@@ -231,6 +250,15 @@ const PlayPage = () => {
     blindfoldMovesRef.current = 0
     setIsVoiceActive(true)
     setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
+    // Persist room info so we can reconnect on reload
+    try {
+      localStorage.setItem('activeOnlineGame', JSON.stringify({
+        roomId: mp.matchInfo?.roomId,
+        color,
+        timeControl: mp.matchInfo?.timeControl,
+        opponent: mp.matchInfo?.opponent,
+      }))
+    } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mp.matchState, mp.liveFen])
 
@@ -308,6 +336,8 @@ const PlayPage = () => {
       type === 'aborted' ? 'aborted' : 'draw',
       volume
     )
+    // Clear persisted room — game is over, no reconnect needed
+    try { localStorage.removeItem('activeOnlineGame') } catch { /* ignore */ }
   }, [mp.gameResult, gameMode, volume])
 
   // ── Engine loading animation ──────────────────────────────────────────────
@@ -830,6 +860,7 @@ const PlayPage = () => {
     setFenHistory([initialFen])
     setCurrentMoveIndex(0)
     try { localStorage.removeItem('activeEngineGame') } catch { /* ignore */ }
+    try { localStorage.removeItem('activeOnlineGame') } catch { /* ignore */ }
   }
 
   const toggleVoiceControl = () => {

@@ -102,6 +102,7 @@ export function useMultiplayerSocket({
   const [opponentDisconnected, setOpponentDisconnected] = useState<OpponentDisconnected | null>(null);
   const [matchmakingStatus, setMatchmakingStatus] = useState<string>('Searching for a worthy opponent…');
   const [lastAppliedMove, setLastAppliedMove] = useState<{ from: string; to: string; san: string } | null>(null);
+  const [gameError, setGameError] = useState<string | null>(null);
 
   // Keep refs for stable callbacks
   const matchInfoRef = useRef<MatchInfo | null>(null);
@@ -152,10 +153,35 @@ export function useMultiplayerSocket({
       turn: 'w' | 'b';
       whiteTimeMs: number;
       blackTimeMs: number;
+      white?: { username: string; rating: number };
+      black?: { username: string; rating: number };
+      timeControl?: string;
     }) => {
       setLiveFen(data.fen);
       setLiveTurn(data.turn);
       setServerClocks({ whiteTimeMs: data.whiteTimeMs, blackTimeMs: data.blackTimeMs });
+      // On reconnect matchInfo is null (no matchmaking:found was emitted).
+      // Rebuild it from the game:state payload + saved localStorage so PlayPage
+      // knows the player's color and opponent info.
+      setMatchInfo((prev) => {
+        if (prev) return prev; // already set from matchmaking:found
+        try {
+          const saved = localStorage.getItem('activeOnlineGame');
+          if (!saved) return prev;
+          const { roomId, color, timeControl: savedTc, opponent } = JSON.parse(saved);
+          const opponentData = opponent ??
+            (color === 'white' ? data.black : data.white) ??
+            { username: 'Opponent', rating: 1200 };
+          return {
+            roomId,
+            color: color as GameColor,
+            timeControl: data.timeControl ?? savedTc ?? 'rapid-10-0',
+            opponent: opponentData,
+          } as MatchInfo;
+        } catch {
+          return prev;
+        }
+      });
       setMatchState('playing');
     });
 
@@ -212,6 +238,7 @@ export function useMultiplayerSocket({
 
     socket.on('game:error', ({ message }: { message: string }) => {
       console.error('[MP] Game error:', message);
+      setGameError(message);
     });
 
     socketRef.current = socket;
@@ -310,6 +337,7 @@ export function useMultiplayerSocket({
     opponentDisconnected,
     matchmakingStatus,
     lastAppliedMove,
+    gameError,
     // Actions
     joinQueue,
     cancelQueue,
