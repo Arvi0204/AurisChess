@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { Chess } from 'chess.js'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
+import PageHeader from '../components/dashboard/PageHeader'
 import PlayerInfoBar from '../components/play/PlayerInfoBar'
 import MoveList from '../components/play/MoveList'
 import MoveNavBar from '../components/play/MoveNavBar'
@@ -549,13 +550,15 @@ const ReviewPage = () => {
   }
 
   return (
-    <div className={`dashboard-shell play-shell${isCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`dashboard-shell play-shell review-active${isCollapsed ? ' sidebar-collapsed' : ''}`}>
       <DashboardSidebar
         username={username}
         isCollapsed={isCollapsed}
       />
 
-      <main className="dashboard-main" style={{ padding: 0, overflow: 'hidden' }}>
+      <main className="dashboard-main review-main-container">
+        <PageHeader />
+
         <div className="review-main">
 
           {/* ── Board Column ──────────────────────────────────────────── */}
@@ -589,6 +592,28 @@ const ReviewPage = () => {
                   subtitle={isEngine && orientation === 'black' ? 'Stockfish Engine' : undefined}
                 />
               </div>
+            </div>
+
+            {/* Mobile-only Navigation Bar */}
+            <div className="review-mobile-nav-bar">
+              <MoveNavBar
+                currentIndex={currentIndex}
+                totalMoves={moves.length}
+                onFirst={() => goTo(0)}
+                onPrev={() => goTo(currentIndex - 1)}
+                onNext={() => goTo(currentIndex + 1)}
+                onLast={() => goTo(moves.length)}
+                extraButtons={
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => setOrientation(o => o === 'white' ? 'black' : 'white')}
+                    title="Flip board"
+                    aria-label="Flip board"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                }
+              />
             </div>
           </section>
 
@@ -632,25 +657,27 @@ const ReviewPage = () => {
               emptyMessage="No moves recorded."
             />
 
-            {/* Nav bar */}
-            <MoveNavBar
-              currentIndex={currentIndex}
-              totalMoves={moves.length}
-              onFirst={() => goTo(0)}
-              onPrev={() => goTo(currentIndex - 1)}
-              onNext={() => goTo(currentIndex + 1)}
-              onLast={() => goTo(moves.length)}
-              extraButtons={
-                <button
-                  className="history-nav-btn"
-                  onClick={() => setOrientation(o => o === 'white' ? 'black' : 'white')}
-                  title="Flip board"
-                  aria-label="Flip board"
-                >
-                  <RefreshCw size={18} />
-                </button>
-              }
-            />
+            {/* Desktop-only Navigation Bar */}
+            <div className="review-desktop-nav-bar">
+              <MoveNavBar
+                currentIndex={currentIndex}
+                totalMoves={moves.length}
+                onFirst={() => goTo(0)}
+                onPrev={() => goTo(currentIndex - 1)}
+                onNext={() => goTo(currentIndex + 1)}
+                onLast={() => goTo(moves.length)}
+                extraButtons={
+                  <button
+                    className="history-nav-btn"
+                    onClick={() => setOrientation(o => o === 'white' ? 'black' : 'white')}
+                    title="Flip board"
+                    aria-label="Flip board"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                }
+              />
+            </div>
 
             {/* PGN copy shortcut */}
             <div className="review-pgn-row">

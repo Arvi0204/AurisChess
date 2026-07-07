@@ -374,3 +374,100 @@
   outline: 2px solid var(--color-cyan);
   outline-offset: -2px;
 }
+
+/* ============================================================
+   Review Main Container & Header/Nav Visibility (Desktop)
+   ============================================================ */
+.review-main-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+.review-active .dashboard-header {
+  display: none;
+}
+
+.review-mobile-nav-bar {
+  display: none;
+}
+
+.review-desktop-nav-bar {
+  display: block;
+}
+
+/* ============================================================
+   Review Page — Responsive Layout
+   ============================================================ */
+@media (max-width: 1040px) {
+  .play-shell.review-active,
+  .play-shell.review-active .review-main-container {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .play-shell.review-active .dashboard-header {
+    display: flex;
+  }
+
+  .review-main {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .review-board-col {
+    height: auto;
+    padding: 12px 8px;
+    overflow: visible;
+    flex: none;
+  }
+
+  .review-eval-board-row {
+    width: 100%;
+    max-width: 460px;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .review-mobile-nav-bar {
+    display: block;
+    width: 100%;
+    max-width: 460px;
+    margin-top: 16px;
+  }
+
+  .review-mobile-nav-bar .history-navigation-bar {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .review-desktop-nav-bar {
+    display: none;
+  }
+
+  .review-panel {
+    width: 100% !important;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #303539;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .review-eval-board-row {
+    max-width: 400px;
+  }
+
+  .review-board-col {
+    padding: 10px 8px 16px;
+  }
+
+  .review-mobile-nav-bar {
+    max-width: 400px;
+  }
+}
