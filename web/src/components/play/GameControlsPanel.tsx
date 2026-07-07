@@ -1,5 +1,5 @@
 import React from 'react'
-import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw } from 'lucide-react'
+import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw, HelpCircle, X } from 'lucide-react'
 import MoveList from './MoveList'
 import MoveNavBar from './MoveNavBar'
 
@@ -58,6 +58,17 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
   opponentDisconnected = false,
   onShowResultModal,
 }) => {
+  const [isHelpOpen, setIsHelpOpen] = React.useState(false)
+  const [isClosing, setIsClosing] = React.useState(false)
+
+  const handleCloseHelp = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsHelpOpen(false)
+      setIsClosing(false)
+    }, 250)
+  }
+
   return (
     <aside className="controls-section">
       {/* Move List */}
@@ -110,7 +121,19 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
           </div>
 
           <div className="voice-details">
-            <span className="voice-title">Voice Command</span>
+            <div className="voice-title-row">
+              <span className="voice-title">Voice Command</span>
+              <button
+                type="button"
+                id="voice-help-trigger"
+                className="voice-help-btn"
+                onClick={() => setIsHelpOpen(true)}
+                title="Show Voice Commands Guide"
+                aria-label="Show Voice Commands Guide"
+              >
+                <HelpCircle size={14} />
+              </button>
+            </div>
             <span className="voice-status">{voiceStatus}</span>
           </div>
 
@@ -270,6 +293,107 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
           </div>
         )}
       </div>
+      {isHelpOpen && (
+        <div 
+          className={`voice-help-overlay${isClosing ? ' voice-help-overlay--closing' : ''}`}
+          id="voice-help-overlay-backdrop"
+          onClick={handleCloseHelp}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Voice Control Guidelines"
+        >
+          <div className="voice-help-card" onClick={(e) => e.stopPropagation()}>
+            <div className="voice-help-header">
+              <h3>
+                <HelpCircle size={18} />
+                Voice Control Guide
+              </h3>
+              <button 
+                type="button"
+                id="voice-help-close-btn"
+                className="voice-help-close-btn" 
+                onClick={handleCloseHelp}
+                aria-label="Close guide"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="voice-help-body">
+              <p className="voice-help-intro">
+                Enable voice control and speak commands naturally. The assistant will transcribe and play your moves.
+              </p>
+              
+              <div className="voice-help-sections">
+                <div className="voice-help-group">
+                  <h4>♟️ Moving Pieces & Pawns</h4>
+                  <ul className="voice-help-list">
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Pawn Moves (just say the square)</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"e4"</span>
+                        <span className="voice-help-example">"d5"</span>
+                      </div>
+                    </li>
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Piece Moves</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"Knight f3"</span>
+                        <span className="voice-help-example">"Bishop c4"</span>
+                        <span className="voice-help-example">"Queen h5"</span>
+                      </div>
+                    </li>
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Captures</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"Knight takes d4"</span>
+                        <span className="voice-help-example">"pawn captures on e5"</span>
+                      </div>
+                    </li>
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Castling</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"castle kingside"</span>
+                        <span className="voice-help-example">"short castle"</span>
+                        <span className="voice-help-example">"castle queenside"</span>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="voice-help-group">
+                  <h4>⚙️ System Commands</h4>
+                  <ul className="voice-help-list">
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Resign Game</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"resign"</span>
+                        <span className="voice-help-example">"give up"</span>
+                        <span className="voice-help-example">"forfeit"</span>
+                      </div>
+                    </li>
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Toggle Board View</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"blindfold"</span>
+                        <span className="voice-help-example">"hide pieces"</span>
+                        <span className="voice-help-example">"show pieces"</span>
+                      </div>
+                    </li>
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Draw Offers</span>
+                      <div className="voice-help-examples">
+                        <span className="voice-help-example">"offer draw"</span>
+                        <span className="voice-help-example">"accept" (respond)</span>
+                        <span className="voice-help-example">"decline" (respond)</span>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   )
 }
