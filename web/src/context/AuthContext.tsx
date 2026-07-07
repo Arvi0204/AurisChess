@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../config/supabaseClient'
 import { API_BASE } from '../config/api'
 
@@ -26,8 +26,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Function to sync user stats with Postgres DB
-  const syncWithPostgres = async (accessToken: string, defaultUser: User) => {
+  // Stable reference — syncWithPostgres is called from inside the auth
+  // listener, so useCallback prevents it becoming a stale closure.
+  const syncWithPostgres = useCallback(async (accessToken: string, defaultUser: User) => {
     try {
       const res = await fetch(`${API_BASE}/api/user/stats`, {
         headers: {
@@ -66,7 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userObj)
           localStorage.setItem('user', JSON.stringify(userObj))
           
-          // Sync with Supabase metadata too
+          // Sync with Supabase metadata too.
+          // Note: this triggers a USER_UPDATED auth event. The listener
+          // guards against that event to avoid re-entering syncWithPostgres.
           await supabase.auth.updateUser({
             data: {
               username: userObj.username,
@@ -78,58 +81,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Could not sync user details with Postgres DB:', err)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    // 1. Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          setToken(session.access_token)
-          localStorage.setItem('authToken', session.access_token)
-          
-          let existingAvatar = ''
-          let existingRatingRapid = 1200
-          let existingRatingBlitz = 1200
-          try {
-            const stored = localStorage.getItem('user')
-            if (stored) {
-              const u = JSON.parse(stored)
-              existingAvatar = u.avatar_url || ''
-              existingRatingRapid = u.rating_rapid || 1200
-              existingRatingBlitz = u.rating_blitz || 1200
-            }
-          } catch {
-            // ignore
-          }
-
-          const initialUser: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Player',
-            avatar_url: session.user.user_metadata?.avatar_url || existingAvatar || '',
-            rating_rapid: existingRatingRapid,
-            rating_blitz: existingRatingBlitz,
-          }
-          
-          setUser(initialUser)
-          localStorage.setItem('user', JSON.stringify(initialUser))
-          
-          // Sync asynchronously
-          syncWithPostgres(session.access_token, initialUser)
-        }
-      } catch (err) {
-        console.error('Failed to get initial session:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    getInitialSession()
-
-    // 2. Setup auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // onAuthStateChange fires immediately with an INITIAL_SESSION event when
+    // the subscription is registered, making a separate getInitialSession call
+    // redundant. Using a single path here prevents duplicate /api/user/stats
+    // requests on every page load.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setToken(session.access_token)
         localStorage.setItem('authToken', session.access_token)
@@ -146,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             existingRatingBlitz = u.rating_blitz || 1200
           }
         } catch {
-          // ignore
+          // ignore corrupt storage
         }
 
         const newUser: User = {
@@ -161,7 +120,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newUser)
         localStorage.setItem('user', JSON.stringify(newUser))
         
-        syncWithPostgres(session.access_token, newUser)
+        // Skip the Postgres sync when this event was fired by our own
+        // syncWithPostgres calling supabase.auth.updateUser — that would
+        // create an infinite loop (USER_UPDATED → sync → updateUser → USER_UPDATED…)
+        if (event !== 'USER_UPDATED') {
+          syncWithPostgres(session.access_token, newUser)
+        }
       } else {
         setUser(null)
         setToken(null)
@@ -174,17 +138,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [syncWithPostgres])
 
-  const updateUser = async (updates: Partial<User>) => {
+  // useCallback with [user] dependency: keeps a stable reference while
+  // always capturing the latest user object — avoids the stale-closure bug
+  // that would overwrite the user with outdated data.
+  const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user) return
     const updatedUser = { ...user, ...updates }
     
-    // Update local state & localStorage
+    // Update local state & localStorage first so the UI is immediately
+    // responsive, then persist to Supabase. Callers that await this function
+    // will wait for the Supabase write to complete before continuing.
     setUser(updatedUser)
     localStorage.setItem('user', JSON.stringify(updatedUser))
 
-    // Update Supabase auth user metadata
     try {
       await supabase.auth.updateUser({
         data: {
@@ -195,9 +163,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Failed to update user metadata in Supabase:', err)
     }
-  }
+  }, [user])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut()
     } catch (err) {
@@ -208,10 +176,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('authToken')
       localStorage.removeItem('user')
     }
-  }
+  }, [])
+
+  // Memoised value object prevents all consumers from re-rendering on
+  // unrelated provider state changes.
+  const value = useMemo(() => ({
+    user,
+    token,
+    isLoading,
+    updateUser,
+    logout,
+  }), [user, token, isLoading, updateUser, logout])
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, updateUser, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
