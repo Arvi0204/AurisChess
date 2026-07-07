@@ -201,5 +201,78 @@
     min-height: 140px;
     overflow-y: auto;
   }
+
+  /* ── Review Page ───────────────────────────────────────────── */
+  .play-shell.review-active,
+  .play-shell.review-active .review-main-container {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .play-shell.review-active .dashboard-header {
+    display: flex;
+  }
+
+  .review-main {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .review-board-col {
+    height: auto;
+    padding: 12px 8px;
+    overflow: visible;
+    flex: none;
+  }
+
+  .review-eval-board-row {
+    width: 100%;
+    max-width: 460px;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .review-mobile-nav-bar {
+    display: block;
+    width: 100%;
+    max-width: 460px;
+    margin-top: 16px;
+  }
+
+  .review-mobile-nav-bar .history-navigation-bar {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .review-desktop-nav-bar {
+    display: none;
+  }
+
+  .review-panel {
+    width: 100% !important;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid var(--color-divider);
+    overflow: visible;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Profile Page — custom breakpoint (968px) ──────────────────
+   Intentionally below the 1040px tablet threshold — the profile
+   grid switches to single-column at a narrower viewport.        */
+@media (max-width: 968px) {
+  .profile-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-nav-sidebar {
+    position: relative;
+    top: 0;
+  }
 }
 

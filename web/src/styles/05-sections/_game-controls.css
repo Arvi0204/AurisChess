@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   background: var(--color-card-solid);
-  border-left: 1px solid #303539;
+  border-left: 1px solid var(--color-divider);
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
@@ -78,7 +78,7 @@
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: #f0f3f5;
+  color: var(--color-text);
 }
 
 .move-row:nth-child(even) {
@@ -259,7 +259,7 @@
 /* Active Game Footer overlays */
 .game-controls-footer {
   padding: 20px;
-  border-top: 1px solid #303539;
+  border-top: 1px solid var(--color-divider);
   background: var(--color-page);
   display: flex;
   flex-direction: column;
@@ -300,7 +300,7 @@
   font-family: var(--font-display);
   font-size: 0.88rem;
   font-weight: 700;
-  color: #f0f3f5;
+  color: var(--color-text);
   text-align: center;
   margin-top: 6px;
 }
@@ -355,7 +355,7 @@
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: #303539;
+  background: var(--color-divider);
   outline: none;
   transition: background 0.2s ease;
 }

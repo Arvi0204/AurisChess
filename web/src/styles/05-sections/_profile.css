@@ -681,22 +681,3 @@
   color: var(--color-cyan);
 }
 
-/* Responsive queries */
-@media (max-width: 968px) {
-  .profile-dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  .profile-nav-sidebar {
-    position: relative;
-    top: 0;
-  }
-}
-
-@media (max-width: 576px) {
-  .settings-form-card {
-    padding: 20px 16px;
-  }
-  .settings-submit {
-    width: 100%;
-  }
-}

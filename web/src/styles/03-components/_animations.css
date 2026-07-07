@@ -103,3 +103,60 @@
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* ── Blindfold Mode Animations ─────────────────────────────── */
+
+/* Iris sweeps IN to cover the board */
+@keyframes blindfold-iris-close {
+  from {
+    clip-path: circle(0% at 50% 50%);
+    opacity: 0;
+  }
+  15% { opacity: 1; }
+  to {
+    clip-path: circle(150% at 50% 50%);
+    opacity: 1;
+  }
+}
+
+/* Iris sweeps OUT to reveal the board */
+@keyframes blindfold-iris-open {
+  from {
+    clip-path: circle(150% at 50% 50%);
+    opacity: 1;
+  }
+  80% { opacity: 0.8; }
+  to {
+    clip-path: circle(0% at 50% 50%);
+    opacity: 0;
+  }
+}
+
+/* Eye icon spring-zoom in */
+@keyframes blindfold-eye-appear {
+  0%   { transform: scale(0.1) rotate(-20deg); opacity: 0; }
+  55%  { transform: scale(1.18) rotate(6deg);  opacity: 1; }
+  75%  { transform: scale(0.92) rotate(-3deg); }
+  90%  { transform: scale(1.04) rotate(1deg);  }
+  100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
+}
+
+/* Eye icon breathing pulse while active */
+@keyframes blindfold-eye-pulse {
+  0%, 100% { filter: drop-shadow(0 0 16px rgba(255, 185, 91, 0.4)); transform: scale(1);    }
+  50%       { filter: drop-shadow(0 0 30px rgba(255, 185, 91, 0.7)); transform: scale(1.05); }
+}
+
+/* Eye icon zoom-fade out as iris re-opens */
+@keyframes blindfold-eye-exit {
+  0%   { transform: scale(1);   opacity: 1;
+         filter: drop-shadow(0 0 20px rgba(255, 185, 91, 0.5)); }
+  100% { transform: scale(2.8); opacity: 0;
+         filter: drop-shadow(0 0 0px  rgba(255, 185, 91, 0));   }
+}
+
+/* Text block fades up after eye settles */
+@keyframes blindfold-text-appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}

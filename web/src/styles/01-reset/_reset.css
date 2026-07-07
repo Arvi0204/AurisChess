@@ -18,6 +18,10 @@ a {
   text-decoration: none;
 }
 
+button {
+  cursor: pointer;
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;

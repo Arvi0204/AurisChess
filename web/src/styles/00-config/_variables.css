@@ -32,6 +32,26 @@
   --color-glass-bg: rgba(18, 24, 28, 0.45);
   --color-glass-border: rgba(255, 255, 255, 0.05);
 
+  /* Color Palette - Semantic Status */
+  --color-success: #34d399;
+  --color-success-strong: #10b981;
+  --color-danger: #f87171;
+  --color-danger-strong: #ef4444;
+
+  /* Color Palette - Accent Purple */
+  --color-purple: #a855f7;
+  --color-purple-glow: rgba(168, 85, 247, 0.1);
+  --color-purple-border: rgba(168, 85, 247, 0.3);
+
+  /* Color Palette - Dividers */
+  --color-divider: #303539;
+
+  /* White Overlay Scale (used for subtle backgrounds on dark surfaces) */
+  --color-white-overlay-03: rgba(255, 255, 255, 0.03);
+  --color-white-overlay-04: rgba(255, 255, 255, 0.04);
+  --color-white-overlay-06: rgba(255, 255, 255, 0.06);
+  --color-white-overlay-08: rgba(255, 255, 255, 0.08);
+
   /* Shared Semantics (Legacy support for existing variables in components) */
   --page: var(--color-page);
   --page-deep: var(--color-page-deep);

@@ -6,7 +6,7 @@
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  background: #07090b;
+  background: var(--color-page-deep);
   box-sizing: border-box;
 }
 
@@ -23,7 +23,7 @@
   background: radial-gradient(circle at center, rgba(128, 207, 255, 0.12) 0%, rgba(7, 9, 11, 0) 65%),
               radial-gradient(circle at 15% 20%, rgba(128, 207, 255, 0.06), transparent 40rem),
               radial-gradient(circle at 85% 75%, rgba(255, 185, 91, 0.03), transparent 40rem),
-              #07090b;
+              var(--color-page-deep);
 }
 
 .board-container {
@@ -43,7 +43,7 @@
   justify-content: space-between;
   padding: 8px 16px;
   background: rgba(23, 29, 33, 0.7);
-  border: 1px solid rgba(128, 207, 255, 0.15);
+  border: 1px solid var(--color-cyan-border);
   border-radius: 8px;
   backdrop-filter: blur(8px);
 }
@@ -58,17 +58,17 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: #171f24;
-  border: 1px solid rgba(128, 207, 255, 0.15);
+  background: var(--color-card-soft);
+  border: 1px solid var(--color-cyan-border);
   display: grid;
   place-items: center;
   font-weight: 700;
   font-size: 0.85rem;
-  color: #f0f3f5;
+  color: var(--color-text);
 }
 
 .player-avatar--ai {
-  background: rgba(255, 185, 91, 0.1);
+  background: var(--color-amber-glow);
   border-color: rgba(255, 185, 91, 0.3);
   color: var(--color-amber);
 }
@@ -80,9 +80,9 @@
 }
 
 .player-avatar--opponent {
-  background: rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.3);
-  color: #a855f7;
+  background: var(--color-purple-glow);
+  border-color: var(--color-purple-border);
+  color: var(--color-purple);
 }
 
 .player-name-container {
@@ -94,7 +94,7 @@
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 700;
-  color: #f0f3f5;
+  color: var(--color-text);
 }
 
 .player-elo {
@@ -110,7 +110,7 @@
   border-radius: 6px;
   background: var(--color-page);
   border: 1px solid rgba(128, 207, 255, 0.08);
-  color: #f0f3f5;
+  color: var(--color-text);
 }
 
 .player-clock--active-turn {
@@ -174,30 +174,6 @@
   animation: blindfold-iris-open 0.55s cubic-bezier(0.55, 0, 1, 0.45) forwards;
 }
 
-@keyframes blindfold-iris-close {
-  from {
-    clip-path: circle(0% at 50% 50%);
-    opacity: 0;
-  }
-  15% { opacity: 1; }
-  to {
-    clip-path: circle(150% at 50% 50%);
-    opacity: 1;
-  }
-}
-
-@keyframes blindfold-iris-open {
-  from {
-    clip-path: circle(150% at 50% 50%);
-    opacity: 1;
-  }
-  80% { opacity: 0.8; }
-  to {
-    clip-path: circle(0% at 50% 50%);
-    opacity: 0;
-  }
-}
-
 /* --- Eye icon inside overlay --- */
 .blindfold-eye-icon {
   color: var(--color-amber);
@@ -222,26 +198,6 @@
   animation: blindfold-eye-exit 0.5s ease-in forwards;
 }
 
-@keyframes blindfold-eye-appear {
-  0%   { transform: scale(0.1) rotate(-20deg); opacity: 0; }
-  55%  { transform: scale(1.18) rotate(6deg);  opacity: 1; }
-  75%  { transform: scale(0.92) rotate(-3deg); }
-  90%  { transform: scale(1.04) rotate(1deg);  }
-  100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
-}
-
-@keyframes blindfold-eye-exit {
-  0%   { transform: scale(1);   opacity: 1;
-         filter: drop-shadow(0 0 20px rgba(255, 185, 91, 0.5)); }
-  100% { transform: scale(2.8); opacity: 0;
-         filter: drop-shadow(0 0 0px  rgba(255, 185, 91, 0));   }
-}
-
-@keyframes blindfold-eye-pulse {
-  0%, 100% { filter: drop-shadow(0 0 16px rgba(255, 185, 91, 0.4)); transform: scale(1);    }
-  50%       { filter: drop-shadow(0 0 30px rgba(255, 185, 91, 0.7)); transform: scale(1.05); }
-}
-
 /* Text block fades up after eye settles */
 .blindfold-overlay-text {
   display: flex;
@@ -251,10 +207,6 @@
   animation: blindfold-text-appear 0.4s ease-out 0.15s both;
 }
 
-@keyframes blindfold-text-appear {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0);    }
-}
-
-.blindfold-mode-overlay h4 { margin: 0; font-size: 1.4rem; color: #f0f3f5; }
+/* TODO BEM: .blindfold-mode-overlay h4 and p should become .blindfold-overlay-text__title and __body */
+.blindfold-mode-overlay h4 { margin: 0; font-size: 1.4rem; color: var(--color-text); }
 .blindfold-mode-overlay p  { margin: 0; font-size: 0.88rem; max-width: 280px; line-height: 1.5; }

@@ -157,4 +157,30 @@
   .board-section {
     padding: 10px 8px 16px;
   }
+
+  /* ── Review Page ───────────────────────────────────────────── */
+  .review-eval-board-row {
+    max-width: 400px;
+  }
+
+  .review-board-col {
+    padding: 10px 8px 16px;
+  }
+
+  .review-mobile-nav-bar {
+    max-width: 400px;
+  }
+}
+
+/* ── Profile Page — custom breakpoint (576px) ──────────────────
+   Intentionally below the 720px mobile threshold — form cards
+   switch to full-width padding at this narrower size.           */
+@media (max-width: 576px) {
+  .settings-form-card {
+    padding: 20px 16px;
+  }
+
+  .settings-submit {
+    width: 100%;
+  }
 }
