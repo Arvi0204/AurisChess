@@ -14,6 +14,7 @@ const SILENCE_RMS_CUTOFF = 0.01;
 interface VoiceControlProps {
   game: Chess;
   makeMove: (moveObj: { from: string; to: string; promotion?: string }) => Move | null;
+  blindfoldMode: boolean;
   setBlindfoldMode: (val: boolean | ((prev: boolean) => boolean)) => void;
   setShowResignConfirm: (val: boolean) => void;
   showResignConfirm: boolean;
@@ -31,11 +32,13 @@ interface VoiceControlProps {
   hasPendingPromotion?: boolean;
   handlePromotionChoice?: (pieceType: string) => void;
   handleCancelPromotion?: () => void;
+  playerColor: 'white' | 'black';
 }
 
 export const useChessVoiceControl = ({
   game,
   makeMove,
+  blindfoldMode,
   setBlindfoldMode,
   setShowResignConfirm,
   showResignConfirm,
@@ -53,6 +56,7 @@ export const useChessVoiceControl = ({
   hasPendingPromotion,
   handlePromotionChoice,
   handleCancelPromotion,
+  playerColor,
 }: VoiceControlProps) => {
   // Refs for the audio pipeline
   const mediaStreamRef    = useRef<MediaStream | null>(null);
@@ -75,6 +79,7 @@ export const useChessVoiceControl = ({
     showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
     offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
     hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
+    blindfoldMode, playerColor,
   });
   useEffect(() => {
     refs.current = {
@@ -82,8 +87,9 @@ export const useChessVoiceControl = ({
       showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
       offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
       hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
+      blindfoldMode, playerColor,
     };
-  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect, hasPendingPromotion, handlePromotionChoice, handleCancelPromotion]);
+  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect, hasPendingPromotion, handlePromotionChoice, handleCancelPromotion, blindfoldMode, playerColor]);
 
   useEffect(() => { isActiveRef.current = isVoiceActive; }, [isVoiceActive]);
 
@@ -270,6 +276,117 @@ export const useChessVoiceControl = ({
         return next;
       });
       return;
+    }
+
+    // ── BLINDFOLD STATE QUERIES ─────────────────────────────────────────────
+    if (current.blindfoldMode) {
+      
+      // 1. Whereabouts Query (Piece locations)
+      const matchPieceQuery = cleanText.match(/\bwhere\b.*\b(bishop|bishops|knight|knights|rook|rooks|queen|queens|king|kings|pawn|pawns)\b/);
+      if (matchPieceQuery) {
+        const pieceWord = matchPieceQuery[1];
+        let targetType = 'p';
+        let singular = 'pawn';
+        let plural = 'pawns';
+
+        if (pieceWord.startsWith('bishop')) { targetType = 'b'; singular = 'bishop'; plural = 'bishops'; }
+        else if (pieceWord.startsWith('knight')) { targetType = 'n'; singular = 'knight'; plural = 'knights'; }
+        else if (pieceWord.startsWith('rook')) { targetType = 'r'; singular = 'rook'; plural = 'rooks'; }
+        else if (pieceWord.startsWith('queen')) { targetType = 'q'; singular = 'queen'; plural = 'queens'; }
+        else if (pieceWord.startsWith('king')) { targetType = 'k'; singular = 'king'; plural = 'kings'; }
+
+        // Target color resolution (defaults to player's color if not specified)
+        const playerColorChar = current.playerColor === 'white' ? 'w' : 'b';
+        const opponentColorChar = playerColorChar === 'w' ? 'b' : 'w';
+        let requestedColor = playerColorChar;
+
+        if (cleanText.match(/\b(opponent|opponents|their|enemy|enemy's)\b/)) {
+          requestedColor = opponentColorChar;
+        } else if (cleanText.includes('white')) {
+          requestedColor = 'w';
+        } else if (cleanText.includes('black')) {
+          requestedColor = 'b';
+        }
+
+        const isPlayerColor = requestedColor === playerColorChar;
+        const board = current.game.board();
+        const squares: string[] = [];
+
+        for (const row of board) {
+          for (const piece of row) {
+            if (piece && piece.type === targetType && piece.color === requestedColor) {
+              squares.push(piece.square);
+            }
+          }
+        }
+
+        squares.sort();
+
+        const formatList = (sqs: string[]) => {
+          if (sqs.length === 0) return '';
+          if (sqs.length === 1) return sqs[0];
+          if (sqs.length === 2) return `${sqs[0]} and ${sqs[1]}`;
+          return `${sqs.slice(0, -1).join(', ')}, and ${sqs[sqs.length - 1]}`;
+        };
+
+        const ownerLabel = isPlayerColor ? "Your" : "Opponent's";
+        const colorLabel = requestedColor === 'w' ? "white" : "black";
+
+        if (squares.length === 0) {
+          const msg = `${ownerLabel} ${colorLabel} ${plural} have all been captured.`;
+          // Estimate block to prevent TTS echo looping
+          const estimatedBlockMs = msg.split(' ').length * 400 + 1500;
+          ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
+
+          speakText(msg);
+          current.setVoiceStatus(msg);
+          return;
+        }
+
+        const verb = squares.length > 1 ? "are" : "is";
+        const name = squares.length > 1 ? plural : singular;
+        const msg = `${ownerLabel} ${name} ${verb} on ${formatList(squares)}.`;
+
+        // Estimate block to prevent TTS echo looping
+        const estimatedBlockMs = msg.split(' ').length * 400 + 1500;
+        ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
+
+        speakText(msg);
+        current.setVoiceStatus(msg);
+        return;
+      }
+
+      // 2. Last Move Query
+      const isLastMoveQuery = cleanText.match(/\b(last move|what did (they|he|she|you|we) play|what was (the|his|her|their|my) last move|what did (they|he|she) do|what just happened)\b/);
+      if (isLastMoveQuery) {
+        const history = current.game.history({ verbose: true }) as Move[];
+        if (history.length === 0) {
+          const msg = "No moves have been played yet.";
+          // Estimate block to prevent TTS echo looping
+          const estimatedBlockMs = msg.split(' ').length * 400 + 1500;
+          ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
+
+          speakText(msg);
+          current.setVoiceStatus(msg);
+          return;
+        }
+
+        const lastMove = history[history.length - 1];
+        const playerColorChar = current.playerColor === 'white' ? 'w' : 'b';
+        const isSelf = lastMove.color === playerColorChar;
+
+        const person = isSelf ? "Your" : "Opponent's";
+        const spokenMove = sanToSpeech(lastMove.san);
+        const msg = `${person} last move was ${spokenMove}.`;
+
+        // Estimate block to prevent TTS echo looping
+        const estimatedBlockMs = msg.split(' ').length * 400 + 1500;
+        ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
+
+        speakText(msg);
+        current.setVoiceStatus(msg);
+        return;
+      }
     }
 
     if (!current.isPlayerTurn) {

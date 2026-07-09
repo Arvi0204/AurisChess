@@ -890,6 +890,7 @@ const PlayPage = () => {
   const { speakText, sanToSpeech } = useChessVoiceControl({
     game: gameRef.current,
     makeMove: activeMakeMove,
+    blindfoldMode,
     setBlindfoldMode,
     setShowResignConfirm,
     showResignConfirm,
@@ -909,6 +910,7 @@ const PlayPage = () => {
     hasPendingPromotion: !!pendingPromotion,
     handlePromotionChoice,
     handleCancelPromotion,
+    playerColor,
   })
 
   // Wire up narrateOpponentMoveRef once speakText/sanToSpeech are available
