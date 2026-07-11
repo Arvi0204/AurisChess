@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
@@ -139,6 +140,7 @@ const App = () => {
     <AuthProvider>
       <SettingsProvider>
         <AppContent />
+        <SpeedInsights />
       </SettingsProvider>
     </AuthProvider>
   )
