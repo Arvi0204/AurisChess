@@ -10,6 +10,8 @@ import ReviewPage from './pages/ReviewPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 // Route guard for authenticated pages
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -148,6 +150,8 @@ const App = () => {
     <AuthProvider>
       <SettingsProvider>
         <AppContent />
+        <Analytics />
+        <SpeedInsights />
       </SettingsProvider>
     </AuthProvider>
   )

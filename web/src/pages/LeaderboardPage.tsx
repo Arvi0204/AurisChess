@@ -170,14 +170,16 @@ const LeaderboardPage = () => {
                           <Award size={14} />
                         </div>
                       </div>
-                      <div className="podium-username" title={secondPlace.username}>
-                        {secondPlace.username}
-                        {user?.username === secondPlace.username && <span className="self-tag">You</span>}
+                      <div className="podium-info">
+                        <div className="podium-username" title={secondPlace.username}>
+                          {secondPlace.username}
+                          {user?.username === secondPlace.username && <span className="self-tag">You</span>}
+                        </div>
+                        <div className="podium-rating">
+                          {mode === 'rapid' ? secondPlace.rating_rapid : secondPlace.rating_blitz} <span>ELO</span>
+                        </div>
+                        <div className="podium-games">{secondPlace.games_played} games</div>
                       </div>
-                      <div className="podium-rating">
-                        {mode === 'rapid' ? secondPlace.rating_rapid : secondPlace.rating_blitz} <span>ELO</span>
-                      </div>
-                      <div className="podium-games">{secondPlace.games_played} games</div>
                     </div>
                   )}
 
@@ -200,14 +202,16 @@ const LeaderboardPage = () => {
                           <Trophy size={14} />
                         </div>
                       </div>
-                      <div className="podium-username" title={firstPlace.username}>
-                        {firstPlace.username}
-                        {user?.username === firstPlace.username && <span className="self-tag">You</span>}
+                      <div className="podium-info">
+                        <div className="podium-username" title={firstPlace.username}>
+                          {firstPlace.username}
+                          {user?.username === firstPlace.username && <span className="self-tag">You</span>}
+                        </div>
+                        <div className="podium-rating">
+                          {mode === 'rapid' ? firstPlace.rating_rapid : firstPlace.rating_blitz} <span>ELO</span>
+                        </div>
+                        <div className="podium-games">{firstPlace.games_played} games</div>
                       </div>
-                      <div className="podium-rating">
-                        {mode === 'rapid' ? firstPlace.rating_rapid : firstPlace.rating_blitz} <span>ELO</span>
-                      </div>
-                      <div className="podium-games">{firstPlace.games_played} games</div>
                     </div>
                   )}
 
@@ -227,14 +231,16 @@ const LeaderboardPage = () => {
                           <Award size={14} />
                         </div>
                       </div>
-                      <div className="podium-username" title={thirdPlace.username}>
-                        {thirdPlace.username}
-                        {user?.username === thirdPlace.username && <span className="self-tag">You</span>}
+                      <div className="podium-info">
+                        <div className="podium-username" title={thirdPlace.username}>
+                          {thirdPlace.username}
+                          {user?.username === thirdPlace.username && <span className="self-tag">You</span>}
+                        </div>
+                        <div className="podium-rating">
+                          {mode === 'rapid' ? thirdPlace.rating_rapid : thirdPlace.rating_blitz} <span>ELO</span>
+                        </div>
+                        <div className="podium-games">{thirdPlace.games_played} games</div>
                       </div>
-                      <div className="podium-rating">
-                        {mode === 'rapid' ? thirdPlace.rating_rapid : thirdPlace.rating_blitz} <span>ELO</span>
-                      </div>
-                      <div className="podium-games">{thirdPlace.games_played} games</div>
                     </div>
                   )}
                 </div>
