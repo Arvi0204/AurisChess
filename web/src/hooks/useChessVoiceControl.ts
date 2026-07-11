@@ -170,6 +170,7 @@ export const useChessVoiceControl = ({
 
   // ─── Move processor (unchanged logic) ─────────────────────────────────────
   const processVoiceCommand = useCallback((rawText: string) => {
+    if (!isActiveRef.current) return;
     const current = refs.current;
     const cleanText = normalizeTranscript(rawText);
 
@@ -568,6 +569,7 @@ export const useChessVoiceControl = ({
 
   // ─── Send audio blob to backend for Groq transcription ───────────────────
   const sendForTranscription = useCallback(async (blob: Blob) => {
+    if (!isActiveRef.current) return;
     // Skip if TTS is currently playing (prevents mic echo loop)
     if (Date.now() < ttsBlockUntilRef.current) {
       console.log('[Voice] Skipping transcription — TTS block active');
@@ -591,16 +593,22 @@ export const useChessVoiceControl = ({
 
     try {
       const res = await fetch(BACKEND_TRANSCRIBE_URL, { method: 'POST', body: form });
+      if (!isActiveRef.current) return;
       const data = await res.json();
+      if (!isActiveRef.current) return;
       if (data.success && data.transcript) {
         processVoiceCommand(data.transcript);
       } else {
         console.warn('[Voice] Empty transcript from Groq');
-        refs.current.setVoiceStatus('Listening... Speak your move');
+        if (isActiveRef.current) {
+          refs.current.setVoiceStatus('Listening... Speak your move');
+        }
       }
     } catch (err) {
       console.error('[Voice] Transcription fetch error:', err);
-      refs.current.setVoiceStatus('Transcription error — check backend');
+      if (isActiveRef.current) {
+        refs.current.setVoiceStatus('Transcription error — check backend');
+      }
     } finally {
       isSendingRef.current = false;
       if (isActiveRef.current) {
@@ -667,6 +675,10 @@ export const useChessVoiceControl = ({
   const startPipeline = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      if (!isActiveRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       mediaStreamRef.current = stream;
 
       // Pick the best supported MIME type
@@ -710,6 +722,7 @@ export const useChessVoiceControl = ({
       startSilenceDetection(stream);
       startNewRecording();
 
+      if (!isActiveRef.current) return;
       refs.current.setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')");
       console.log('[Voice] Pipeline started');
     } catch (err: unknown) {

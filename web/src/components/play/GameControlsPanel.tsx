@@ -14,6 +14,8 @@ interface GameControlsPanelProps {
   isVoiceActive: boolean
   toggleVoiceControl: () => void
   voiceStatus: string
+  talkbackEnabled?: boolean
+  onToggleTalkback?: () => void
   gameResult: { type: 'win' | 'loss' | 'draw' | 'aborted'; reason: string } | null
   showResignConfirm: boolean
   setShowResignConfirm: (val: boolean) => void
@@ -44,6 +46,8 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
   isVoiceActive,
   toggleVoiceControl,
   voiceStatus,
+  talkbackEnabled = false,
+  onToggleTalkback,
   gameResult,
   showResignConfirm,
   setShowResignConfirm,
@@ -108,35 +112,22 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
 
       {/* Voice Control Panel */}
       <div className="voice-panel-card">
-        <div className="voice-panel-row">
+        <div className="voice-panel-header">
+          <span className="voice-panel-title">Voice Control</span>
+        </div>
+        {/* Top Row: Mic, Waveform, Talkback Toggle, Help */}
+        <div className="voice-panel-top-row">
           <div className="voice-mic-container">
             <button
               type="button"
               className={`voice-mic-btn${isVoiceActive ? ' voice-mic-btn--active' : ''}`}
               onClick={toggleVoiceControl}
               aria-label={isVoiceActive ? 'Stop voice control' : 'Start voice control'}
-              disabled={!!gameResult}
+              disabled={!!gameResult || blindfoldMode}
             >
-              <Mic size={20} />
+              <Mic size={18} />
             </button>
             <div className="mic-ripple" />
-          </div>
-
-          <div className="voice-details">
-            <div className="voice-title-row">
-              <span className="voice-title">Voice Command</span>
-              <button
-                type="button"
-                id="voice-help-trigger"
-                className="voice-help-btn"
-                onClick={() => setIsHelpOpen(true)}
-                title="Show Voice Commands Guide"
-                aria-label="Show Voice Commands Guide"
-              >
-                <HelpCircle size={14} />
-              </button>
-            </div>
-            <span className="voice-status">{voiceStatus}</span>
           </div>
 
           <div className={`voice-waveform${isVoiceActive ? ' voice-waveform--active' : ''}`}>
@@ -147,6 +138,38 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
             <div className="voice-wave-bar" />
             <div className="voice-wave-bar" />
           </div>
+
+          <div className="voice-talkback-toggle-container">
+            <label className="voice-setting-toggle" htmlFor="talkback-toggle">
+              <span className="voice-setting-label">Talkback</span>
+              <div className="switch-wrapper">
+                <input
+                  type="checkbox"
+                  id="talkback-toggle"
+                  checked={blindfoldMode || talkbackEnabled}
+                  onChange={onToggleTalkback}
+                  disabled={blindfoldMode || !isVoiceActive}
+                />
+                <span className="switch-slider" />
+              </div>
+            </label>
+          </div>
+
+          <button
+            type="button"
+            id="voice-help-trigger"
+            className="voice-help-btn"
+            onClick={() => setIsHelpOpen(true)}
+            title="Show Voice Commands Guide"
+            aria-label="Show Voice Commands Guide"
+          >
+            <HelpCircle size={16} />
+          </button>
+        </div>
+
+        {/* Bottom Row: Status / Transcription */}
+        <div className="voice-panel-bottom-row">
+          <span className="voice-status">{voiceStatus}</span>
         </div>
       </div>
 

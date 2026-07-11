@@ -92,6 +92,9 @@ const PlayPage = () => {
   // ── Voice states ──────────────────────────────────────────────────────────
   const [isVoiceActive, setIsVoiceActive] = useState(false)
   const [voiceStatus, setVoiceStatus] = useState('Click mic to start speaking moves')
+  const [talkbackEnabled, setTalkbackEnabled] = useState(() => {
+    return localStorage.getItem('aurischess_talkback') === 'true'
+  })
 
   // ── Promotion states ──────────────────────────────────────────────────────
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null)
@@ -280,8 +283,8 @@ const PlayPage = () => {
       const move = gameRef.current.move({ from, to, promotion: 'q' })
       if (move) {
         updateGameStateAfterMove(true)
-        // Narrate opponent move when voice is active or blindfold mode is on
-        if (isVoiceActiveRef.current || blindfoldModeRef.current) {
+        // Narrate opponent move when blindfold mode is on, or when voice is active and talkback is enabled
+        if (blindfoldModeRef.current || (isVoiceActiveRef.current && talkbackEnabledRef.current)) {
           narrateOpponentMoveRef.current(move.san)
         }
       }
@@ -533,8 +536,8 @@ const PlayPage = () => {
       const move = gameRef.current.move({ from, to, promotion })
       if (move) {
         updateGameStateAfterMove()
-        // Narrate the engine's move when voice is active or blindfold mode is on
-        if (isVoiceActiveRef.current || blindfoldModeRef.current) {
+        // Narrate the engine's move when blindfold mode is on, or when voice is active and talkback is enabled
+        if (blindfoldModeRef.current || (isVoiceActiveRef.current && talkbackEnabledRef.current)) {
           narrateOpponentMoveRef.current(move.san)
         }
         const queuedPremove = manualPremoveRef.current
@@ -874,6 +877,25 @@ const PlayPage = () => {
 
   useEffect(() => { if (gameResult) setIsVoiceActive(false) }, [gameResult])
 
+  useEffect(() => {
+    if (blindfoldMode) {
+      setIsVoiceActive(true)
+      setTalkbackEnabled(true)
+      setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')")
+    }
+  }, [blindfoldMode])
+
+  const isVoiceFirstMount = useRef(true)
+  useEffect(() => {
+    if (isVoiceFirstMount.current) {
+      isVoiceFirstMount.current = false
+      return
+    }
+    if (!isVoiceActive) {
+      setTalkbackEnabled(false)
+    }
+  }, [isVoiceActive])
+
   // ── Player turn ───────────────────────────────────────────────────────────
   const turn = gameRef.current.turn()
   const playerIsWhite = playerColor === 'white'
@@ -886,6 +908,11 @@ const PlayPage = () => {
   const narrateOpponentMoveRef = useRef<(san: string) => void>(() => {})
   const isVoiceActiveRef = useRef(isVoiceActive)
   useEffect(() => { isVoiceActiveRef.current = isVoiceActive }, [isVoiceActive])
+  const talkbackEnabledRef = useRef(talkbackEnabled)
+  useEffect(() => {
+    localStorage.setItem('aurischess_talkback', String(talkbackEnabled))
+    talkbackEnabledRef.current = talkbackEnabled
+  }, [talkbackEnabled])
 
   const { speakText, sanToSpeech } = useChessVoiceControl({
     game: gameRef.current,
@@ -1043,6 +1070,8 @@ const PlayPage = () => {
               isVoiceActive={isVoiceActive}
               toggleVoiceControl={toggleVoiceControl}
               voiceStatus={voiceStatus}
+              talkbackEnabled={talkbackEnabled}
+              onToggleTalkback={() => setTalkbackEnabled((prev) => !prev)}
               gameResult={gameResult}
               showResignConfirm={showResignConfirm}
               setShowResignConfirm={setShowResignConfirm}
