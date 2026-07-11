@@ -1,4 +1,4 @@
-import { Award, Activity } from 'lucide-react'
+import { Clock, Zap, Activity } from 'lucide-react'
 import EloChart from './EloChart'
 import type { HistoryPoint } from './EloChart'
 
@@ -28,29 +28,29 @@ const ProfileStatsTab = ({ stats, ratingType, setRatingType }: ProfileStatsTabPr
     <div className="profile-stats-tab animate-fade-in">
       {/* ELO Summary Cards Grid */}
       <div className="profile-stats-cards">
-        <div className="stat-card glass-panel stat-card--cyan">
+        <div className="stat-card glass-panel stat-card--amber">
           <div className="stat-card-header">
             <span className="stat-card-label">Rapid Rating</span>
             <div className="stat-card-icon">
-              <Award size={20} />
+              <Clock size={20} />
             </div>
           </div>
           <div className="stat-card-value">{stats.user.rating_rapid}</div>
           <span className="stat-card-footer">K-Factor: 32</span>
         </div>
 
-        <div className="stat-card glass-panel stat-card--amber">
+        <div className="stat-card glass-panel stat-card--purple">
           <div className="stat-card-header">
             <span className="stat-card-label">Blitz Rating</span>
             <div className="stat-card-icon">
-              <Award size={20} />
+              <Zap size={20} />
             </div>
           </div>
           <div className="stat-card-value">{stats.user.rating_blitz}</div>
           <span className="stat-card-footer">K-Factor: 32</span>
         </div>
 
-        <div className="stat-card glass-panel stat-card--purple">
+        <div className="stat-card glass-panel stat-card--cyan">
           <div className="stat-card-header">
             <span className="stat-card-label">Record (W / L / D)</span>
             <div className="stat-card-icon">

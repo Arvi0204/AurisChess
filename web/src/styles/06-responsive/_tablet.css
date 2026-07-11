@@ -90,9 +90,13 @@
   }
 
   .dashboard-header {
+    padding: 0;
+  }
+
+  .dashboard-header-inner {
     flex-direction: column;
     gap: 16px;
-    padding-left: 72px;
+    padding: clamp(24px, 4vw, 40px) clamp(24px, 4vw, 48px) clamp(24px, 4vw, 40px) 72px;
   }
 
   .header-brand-mobile {

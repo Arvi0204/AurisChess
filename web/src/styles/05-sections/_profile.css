@@ -75,9 +75,11 @@
 }
 
 .avatar-initial-large {
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 700;
   color: var(--color-muted);
+  line-height: 1;
 }
 
 .avatar-upload-btn {
@@ -193,8 +195,6 @@
   background: var(--color-cyan-overlay-hover, rgba(0, 191, 255, 0.12));
   color: var(--color-cyan) !important;
   border-left: 3px solid var(--color-cyan);
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
 }
 
 .profile-tab-item--active .arrow-icon {
@@ -230,6 +230,19 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--color-white-overlay-04, rgba(255, 255, 255, 0.04));
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(23, 29, 33, 0.75) 0%, rgba(15, 20, 23, 0.75) 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--color-white-overlay-03, rgba(255, 255, 255, 0.03));
+  transition: transform 300ms var(--transition-bezier),
+              border-color 300ms var(--transition-ease),
+              box-shadow 300ms var(--transition-ease);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3), 0 0 18px rgba(var(--stat-color-rgb), 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-color: rgba(var(--stat-color-rgb), 0.35);
 }
 
 .stat-card-header {
@@ -251,13 +264,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--color-white-overlay-04);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--stat-color-rgb), 0.06);
+  border: 1px solid rgba(var(--stat-color-rgb), 0.12);
+  color: var(--stat-color);
+  transition: all 300ms var(--transition-bezier);
+}
+
+.stat-card:hover .stat-card-icon {
+  background: rgba(var(--stat-color-rgb), 0.14);
+  border-color: rgba(var(--stat-color-rgb), 0.25);
+  transform: scale(1.06);
 }
 
 .stat-card-value {
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 750;
   color: var(--color-text);
@@ -271,27 +294,21 @@
 }
 
 .stat-card--cyan {
+  --stat-color: var(--color-cyan, #80cfff);
+  --stat-color-rgb: 128, 207, 255;
   border-left: 4px solid var(--color-cyan);
-}
-.stat-card--cyan .stat-card-icon {
-  background: rgba(0, 191, 255, 0.15);
-  color: var(--color-cyan);
 }
 
 .stat-card--amber {
-  border-left: 4px solid var(--color-amber, #ffb95b);
-}
-.stat-card--amber .stat-card-icon {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-amber);
+  --stat-color: var(--color-amber, #ffb95b);
+  --stat-color-rgb: 255, 185, 91;
+  border-left: 4px solid var(--color-amber);
 }
 
 .stat-card--purple {
+  --stat-color: #c084fc;
+  --stat-color-rgb: 168, 85, 247;
   border-left: 4px solid #a855f7;
-}
-.stat-card--purple .stat-card-icon {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
 }
 
 /* Custom Interactive ELO SVG chart styles */

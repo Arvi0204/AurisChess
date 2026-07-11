@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Crown, Search, Swords, Zap, Award, Trophy, Loader2 } from 'lucide-react'
+import { Crown, Search, Clock, Zap, Award, Trophy, Loader2 } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import PageHeader from '../components/dashboard/PageHeader'
 import { useAuth } from '../context/AuthContext'
@@ -107,7 +107,7 @@ const LeaderboardPage = () => {
                 type="button"
                 aria-label="Show Rapid Leaderboard"
               >
-                <Swords size={16} />
+                <Clock size={16} />
                 <span>Rapid</span>
               </button>
               <button

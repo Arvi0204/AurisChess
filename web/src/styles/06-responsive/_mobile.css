@@ -114,6 +114,10 @@
 
   /* Dashboard Overrides */
   .dashboard-header {
+    padding: 0;
+  }
+
+  .dashboard-header-inner {
     flex-direction: column;
     gap: 16px;
     padding: 20px 20px 20px 72px;
