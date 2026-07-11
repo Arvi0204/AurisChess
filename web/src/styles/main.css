@@ -42,6 +42,7 @@
 @import url('./05-sections/_profile.css');
 @import url('./05-sections/_learn.css');
 @import url('./05-sections/_review.css');
+@import url('./05-sections/_leaderboard.css');
 
 /* 06-Responsive Layer */
 @import url('./06-responsive/_tablet.css');

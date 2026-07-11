@@ -7,6 +7,7 @@ import LearnPage from './pages/LearnPage'
 import PlayPage from './pages/PlayPage'
 import ProfilePage from './pages/ProfilePage'
 import ReviewPage from './pages/ReviewPage'
+import LeaderboardPage from './pages/LeaderboardPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
 
@@ -124,6 +125,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <ReviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
             </ProtectedRoute>
           }
         />

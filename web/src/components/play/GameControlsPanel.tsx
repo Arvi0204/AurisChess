@@ -1,5 +1,5 @@
 import React from 'react'
-import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw, HelpCircle, X, Handshake, Flame } from 'lucide-react'
+import { Mic, Flag, RotateCcw, Eye, EyeOff, Play, RefreshCw, HelpCircle, X, Handshake, Flame, Settings, Volume2 } from 'lucide-react'
 import MoveList from './MoveList'
 import MoveNavBar from './MoveNavBar'
 
@@ -348,7 +348,7 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
               
               <div className="voice-help-sections">
                 <div className="voice-help-group">
-                  <h4>♟️ Moving Pieces & Pawns</h4>
+                  <h4><Play size={14} /> Moving Pieces & Pawns</h4>
                   <ul className="voice-help-list">
                     <li className="voice-help-item">
                       <span className="voice-help-label">Pawn Moves (just say the square)</span>
@@ -384,7 +384,7 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
                 </div>
 
                 <div className="voice-help-group">
-                  <h4>⚙️ System Commands</h4>
+                  <h4><Settings size={14} /> System Commands</h4>
                   <ul className="voice-help-list">
                     <li className="voice-help-item">
                       <span className="voice-help-label">Resign Game</span>
@@ -409,6 +409,18 @@ const GameControlsPanel: React.FC<GameControlsPanelProps> = ({
                         <span className="voice-help-example">"accept" (respond)</span>
                         <span className="voice-help-example">"decline" (respond)</span>
                       </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="voice-help-group">
+                  <h4><Volume2 size={14} /> Audio & Settings</h4>
+                  <ul className="voice-help-list">
+                    <li className="voice-help-item">
+                      <span className="voice-help-label">Talkback Setting</span>
+                      <p className="voice-help-desc">
+                        Controls vocal narration of opponent's moves. Automatically enabled and locked when Blindfold Mode is active. Switches off automatically when voice control is stopped.
+                      </p>
                     </li>
                   </ul>
                 </div>

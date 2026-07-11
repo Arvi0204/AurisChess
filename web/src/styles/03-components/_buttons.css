@@ -30,12 +30,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 50px;
+  min-height: 46px;
   gap: 10px;
-  padding: 14px clamp(20px, 3vw, 32px);
-  border-radius: 10px;
+  padding: 10px clamp(24px, 3vw, 36px);
+  border-radius: 12px;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 750;
   transition: transform var(--transition-duration-normal) var(--transition-bezier),
               border-color var(--transition-duration-normal) var(--transition-ease),
               background var(--transition-duration-normal) var(--transition-ease),
@@ -44,16 +44,21 @@
 
 .primary-button {
   color: var(--color-page-deep);
-  border: 1px solid #c2e7ff;
-  background: linear-gradient(135deg, #a8dfff 0%, #00b0f0 100%);
-  box-shadow: 0 4px 12px rgba(0, 176, 240, 0.15), 0 12px 30px rgba(0, 176, 240, 0.1);
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);
+  border: none;
+  background: linear-gradient(135deg, #a8dfff 0%, #80cfff 50%, #00b0f0 100%);
+  box-shadow: 0 4px 16px rgba(0, 176, 240, 0.2), 0 12px 32px rgba(0, 176, 240, 0.12);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
 }
 
 .primary-button:hover {
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, #c2e7ff 0%, #20c0ff 100%);
-  box-shadow: 0 6px 16px rgba(0, 176, 240, 0.25), 0 16px 40px rgba(0, 176, 240, 0.2);
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(135deg, #c2e7ff 0%, #a8dfff 50%, #20c0ff 100%);
+  box-shadow: 0 6px 20px rgba(0, 176, 240, 0.3), 0 16px 40px rgba(0, 176, 240, 0.2);
+}
+
+.primary-button:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .secondary-button {
@@ -61,13 +66,18 @@
   border: 1px solid var(--color-white-overlay-08);
   background: var(--color-white-overlay-03);
   backdrop-filter: blur(10px);
+  cursor: pointer;
 }
 
 .secondary-button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
   border-color: rgba(128, 207, 255, 0.3);
   background: var(--color-white-overlay-06);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.secondary-button:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .google-button {

@@ -561,6 +561,9 @@
   color: var(--color-amber);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .voice-help-list {
@@ -602,6 +605,13 @@
   color: var(--color-cyan);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.voice-help-desc {
+  font-size: 0.76rem;
+  color: var(--color-muted-low);
+  line-height: 1.4;
+  margin: 2px 0 0 0;
 }
 
 /* Active Game Footer overlays */

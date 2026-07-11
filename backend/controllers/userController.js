@@ -375,10 +375,72 @@ const getUserGames = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/user/leaderboard
+ * Fetches rankings of all players sorted by Rapid and Blitz ratings separately.
+ */
+const getLeaderboard = async (req, res) => {
+  try {
+    // Top 100 players by Rapid rating
+    // We compute total multiplayer games played using a subquery/left join on the games table
+    const rapid = await db.any(
+      `SELECT 
+        u.id, 
+        u.username, 
+        u.rating_rapid, 
+        u.rating_blitz, 
+        u.avatar_url, 
+        u.created_at,
+        COUNT(g.id) as games_played
+       FROM users u
+       LEFT JOIN games g ON (g.white_player_id = u.id OR g.black_player_id = u.id) AND g.game_type IN ('rapid', 'blitz')
+       GROUP BY u.id
+       ORDER BY u.rating_rapid DESC, u.username ASC
+       LIMIT 100`
+    );
+
+    // Top 100 players by Blitz rating
+    const blitz = await db.any(
+      `SELECT 
+        u.id, 
+        u.username, 
+        u.rating_rapid, 
+        u.rating_blitz, 
+        u.avatar_url, 
+        u.created_at,
+        COUNT(g.id) as games_played
+       FROM users u
+       LEFT JOIN games g ON (g.white_player_id = u.id OR g.black_player_id = u.id) AND g.game_type IN ('rapid', 'blitz')
+       GROUP BY u.id
+       ORDER BY u.rating_blitz DESC, u.username ASC
+       LIMIT 100`
+    );
+
+    // Format games_played as numbers since COUNT returns a string in pg
+    const formatPlayer = (p) => ({
+      ...p,
+      games_played: parseInt(p.games_played, 10) || 0
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        rapid: rapid.map(formatPlayer),
+        blitz: blitz.map(formatPlayer)
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching leaderboard:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
 module.exports = {
   getUserStats,
   updateProfile,
   endMultiplayerGame,
   saveEngineGame,
   getUserGames,
+  getLeaderboard,
 };
+

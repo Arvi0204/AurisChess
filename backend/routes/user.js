@@ -6,12 +6,14 @@ const {
   updateProfile,
   endMultiplayerGame,
   saveEngineGame,
-  getUserGames
+  getUserGames,
+  getLeaderboard
 } = require('../controllers/userController');
 
 // All routes here are protected and require JWT authentication
 router.get('/stats', authenticate, getUserStats);
 router.get('/games', authenticate, getUserGames);
+router.get('/leaderboard', authenticate, getLeaderboard);
 router.put('/profile', authenticate, updateProfile);
 router.post('/game-end', authenticate, endMultiplayerGame);
 router.post('/game-end-engine', authenticate, saveEngineGame);

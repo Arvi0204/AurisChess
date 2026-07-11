@@ -18,7 +18,7 @@ const navItems = [
   { icon: Home, label: 'Home', href: '/dashboard' },
   { icon: Swords, label: 'Play', href: '/play' },
   { icon: BookOpen, label: 'Learn', href: '/learn' },
-  { icon: Crown, label: 'Leaderboard', href: '#leaderboard' },
+  { icon: Crown, label: 'Leaderboard', href: '/leaderboard' },
 ]
 
 type DashboardSidebarProps = {
