@@ -9,6 +9,8 @@
   background: linear-gradient(135deg, rgba(23, 29, 33, 0.7) 0%, rgba(15, 20, 23, 0.7) 100%);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--color-white-overlay-03);
   text-align: left;
+  position: relative;
+  overflow: hidden;
   transition: transform 300ms var(--transition-bezier),
               border-color 300ms var(--transition-ease),
               box-shadow 300ms var(--transition-ease);
@@ -24,6 +26,21 @@
   transform: translateY(-4px) scale(1.01);
   border-color: rgba(var(--stat-color-rgb), 0.35);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3), 0 0 18px rgba(var(--stat-color-rgb), 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.stat-item__sparkline {
+  position: absolute;
+  right: 12px;
+  bottom: 0px;
+  color: var(--stat-color);
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity 300ms var(--transition-ease), transform 300ms var(--transition-bezier);
+}
+
+.stat-item:hover .stat-item__sparkline {
+  opacity: 0.65;
+  transform: translateY(-2px);
 }
 
 .stat-item__icon-wrapper {

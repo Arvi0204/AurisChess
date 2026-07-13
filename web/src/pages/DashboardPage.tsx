@@ -16,11 +16,15 @@ const DashboardPage = () => {
     streak: number | string
     ratingRapid: number | string
     ratingBlitz: number | string
+    rapidHistory: any[]
+    blitzHistory: any[]
   }>({
     totalGames: '—',
     streak: '—',
     ratingRapid: '—',
     ratingBlitz: '—',
+    rapidHistory: [],
+    blitzHistory: [],
   })
 
   const username = user?.username || 'Player'
@@ -44,6 +48,8 @@ const DashboardPage = () => {
               streak: data.stats?.win_streak ?? 0,
               ratingRapid: data.user?.rating_rapid ?? 1200,
               ratingBlitz: data.user?.rating_blitz ?? 1200,
+              rapidHistory: data.rapidHistory ?? [],
+              blitzHistory: data.blitzHistory ?? [],
             })
           }
         }
@@ -78,6 +84,8 @@ const DashboardPage = () => {
             streak={stats.streak}
             ratingRapid={stats.ratingRapid}
             ratingBlitz={stats.ratingBlitz}
+            rapidHistory={stats.rapidHistory}
+            blitzHistory={stats.blitzHistory}
           />
           <RecentGames />
         </div>

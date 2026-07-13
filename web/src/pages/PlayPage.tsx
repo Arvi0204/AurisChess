@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Bot, X } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { Bot, X, Users, ArrowLeft } from 'lucide-react'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import PageHeader from '../components/dashboard/PageHeader'
 import GameBoard from '../components/play/GameBoard'
@@ -40,7 +40,7 @@ const timeControls = [
 ]
 
 const PlayPage = () => {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const modeParam = searchParams.get('mode')
 
   const { user, token } = useAuth()
@@ -51,6 +51,20 @@ const PlayPage = () => {
 
 
   // ── Setup options ─────────────────────────────────────────────────────────
+  const initialTab = modeParam === 'computer' || modeParam === 'online' ? modeParam : 'online'
+  const [activeSetupTab, setActiveSetupTab] = useState<'online' | 'computer'>(initialTab as any)
+
+  useEffect(() => {
+    if (modeParam === 'computer' || modeParam === 'online') {
+      setActiveSetupTab(modeParam)
+    }
+  }, [modeParam])
+
+  const handleTabChange = (tab: 'online' | 'computer') => {
+    setActiveSetupTab(tab)
+    setSearchParams({ mode: tab })
+  }
+
   const [selectedLevel, setSelectedLevel] = useState('medium')
   const [selectedTimeControl, setSelectedTimeControl] = useState('rapid-10-0')
   const [selectedEngineColor, setSelectedEngineColor] = useState<'white' | 'black' | 'random'>('white')
@@ -408,6 +422,7 @@ const PlayPage = () => {
           fen: initialFen, fenHistory: [initialFen], pgn: '',
           blindfoldMode: false, totalMoves: 0, blindfoldMoves: 0,
           playerTime: timeLimit, opponentTime: timeLimit,
+          updatedAt: Date.now(),
         }))
       } catch (err) { console.error('Failed to save initial engine game:', err) }
     }, 1000)
@@ -420,6 +435,15 @@ const PlayPage = () => {
     if (saved) {
       try {
         const data = JSON.parse(saved)
+
+        // Discard engine game if it is older than 10 minutes
+        const INACTIVITY_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
+        const updatedAt = data.updatedAt || 0
+        if (updatedAt && Date.now() - updatedAt > INACTIVITY_EXPIRY_MS) {
+          localStorage.removeItem('activeEngineGame')
+          return
+        }
+
         const restoredChess = new Chess()
         if (data.pgn) restoredChess.loadPgn(data.pgn)
         gameRef.current = restoredChess
@@ -653,6 +677,7 @@ const PlayPage = () => {
             blindfoldMode: blindfoldModeRef.current,
             totalMoves: totalMovesRef.current, blindfoldMoves: blindfoldMovesRef.current,
             playerTime: playerTimeRef.current, opponentTime: opponentTimeRef.current,
+            updatedAt: Date.now(),
           }))
         } catch { /* ignore */ }
       }
@@ -1084,7 +1109,12 @@ const PlayPage = () => {
                 if (gameMode === 'computer' && !gameResult) {
                   try {
                     const saved = localStorage.getItem('activeEngineGame')
-                    if (saved) { const d = JSON.parse(saved); d.blindfoldMode = val; localStorage.setItem('activeEngineGame', JSON.stringify(d)) }
+                    if (saved) {
+                      const d = JSON.parse(saved)
+                      d.blindfoldMode = val
+                      d.updatedAt = Date.now()
+                      localStorage.setItem('activeEngineGame', JSON.stringify(d))
+                    }
                   } catch { /* ignore */ }
                 }
               }}
@@ -1168,24 +1198,53 @@ const PlayPage = () => {
         ) : (
           /* Setup View */
           <div className="play-page-content">
-            <div className="play-mode-grid">
-              <EngineSetupCard
-                selectedLevel={selectedLevel}
-                setSelectedLevel={setSelectedLevel}
-                selectedEngineColor={selectedEngineColor}
-                setSelectedEngineColor={setSelectedEngineColor}
-                onPlay={() => setIsInitializingEngine(true)}
-                modeParam={modeParam}
-                engineLevels={engineLevels}
-              />
-              <OnlineSetupCard
-                timeControls={timeControls}
-                selectedTimeControl={selectedTimeControl}
-                setSelectedTimeControl={setSelectedTimeControl}
-                onFindMatch={() => mp.joinQueue(selectedTimeControl)}
-                modeParam={modeParam}
-              />
+            <div className="play-setup-tabs-wrapper">
+              <div className="play-setup-tabs">
+                <button
+                  type="button"
+                  className={`play-setup-tab play-setup-tab--cyan${activeSetupTab === 'online' ? ' play-setup-tab--active' : ''}`}
+                  onClick={() => handleTabChange('online')}
+                >
+                  <Users size={16} aria-hidden="true" />
+                  Play Online
+                </button>
+                <button
+                  type="button"
+                  className={`play-setup-tab play-setup-tab--amber${activeSetupTab === 'computer' ? ' play-setup-tab--active' : ''}`}
+                  onClick={() => handleTabChange('computer')}
+                >
+                  <Bot size={16} aria-hidden="true" />
+                  Play vs Computer
+                </button>
+              </div>
             </div>
+
+            <div className="play-mode-focused">
+              {activeSetupTab === 'computer' ? (
+                <EngineSetupCard
+                  selectedLevel={selectedLevel}
+                  setSelectedLevel={setSelectedLevel}
+                  selectedEngineColor={selectedEngineColor}
+                  setSelectedEngineColor={setSelectedEngineColor}
+                  onPlay={() => setIsInitializingEngine(true)}
+                  modeParam={modeParam}
+                  engineLevels={engineLevels}
+                />
+              ) : (
+                <OnlineSetupCard
+                  timeControls={timeControls}
+                  selectedTimeControl={selectedTimeControl}
+                  setSelectedTimeControl={setSelectedTimeControl}
+                  onFindMatch={() => mp.joinQueue(selectedTimeControl)}
+                  modeParam={modeParam}
+                />
+              )}
+            </div>
+
+            <Link to="/dashboard" className="back-to-dashboard-btn" style={{ textDecoration: 'none' }}>
+              <ArrowLeft size={14} aria-hidden="true" />
+              Back to Dashboard
+            </Link>
           </div>
         )}
       </main>
