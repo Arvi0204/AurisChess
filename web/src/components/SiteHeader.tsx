@@ -1,4 +1,3 @@
-import { ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/aurischess-logo.svg'
 import { useAuth } from '../context/AuthContext'
@@ -12,14 +11,10 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
 
   if (variant === 'auth') {
     return (
-      <header className="top-bar auth-top-bar">
+      <header className="top-bar auth-top-bar" style={{ justifyContent: 'center' }}>
         <Link className="logo" to="/" aria-label="AurisChess home">
           <img className="logo__graphic" src={logo} alt="" />
           <span className="logo__text">Auris<span>Chess</span></span>
-        </Link>
-        <Link className="back-link" to="/">
-          <ArrowLeft size={16} aria-hidden="true" />
-          Home
         </Link>
       </header>
     )
@@ -29,17 +24,14 @@ const SiteHeader = ({ variant = 'home' }: SiteHeaderProps) => {
 
   return (
     <header className="top-bar">
-      <a className="logo" href="#top" aria-label="AurisChess home">
+      <Link className="logo" to="/" aria-label="AurisChess home">
         <img className="logo__graphic" src={logo} alt="" />
         <span className="logo__text">Auris<span>Chess</span></span>
-      </a>
+      </Link>
       <div className="top-actions">
         <nav className="main-nav" aria-label="Primary navigation">
-          <a className="active" href="#ai">
-            Play vs AI
-          </a>
-          <a href="#multiplayer">Multiplayer</a>
-          <a href="#learn">Learn</a>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
         </nav>
         {loggedIn ? (
           <Link className="login-button" to="/dashboard">

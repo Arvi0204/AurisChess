@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import logo from '../assets/aurischess-logo.svg'
 import googleLogo from '../assets/google-logo.svg'
@@ -8,10 +8,29 @@ import { supabase } from '../config/supabaseClient'
 
 const AuthPanel = () => {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const location = useLocation()
+  
+  const [mode, setMode] = useState<'login' | 'signup'>(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const modeParam = searchParams.get('mode')
+    if (modeParam === 'signup' || modeParam === 'register') return 'signup'
+    if (location.state?.mode === 'signup' || location.state?.mode === 'register') return 'signup'
+    return 'login'
+  })
   const [showPassword, setShowPassword] = useState(false)
   const isSignup = mode === 'signup'
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync mode state if URL search query changes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const modeParam = searchParams.get('mode')
+    if (modeParam === 'signup' || modeParam === 'register') {
+      setMode('signup')
+    } else if (modeParam === 'login') {
+      setMode('login')
+    }
+  }, [location.search])
 
   // Cleanup redirect timeout on unmount
   useEffect(() => {
@@ -136,7 +155,13 @@ const AuthPanel = () => {
 
       <div className="auth-heading">
         <p className="mini-label">{isSignup ? 'Create your account' : 'Welcome back'}</p>
-        <h2 id="auth-title">{isSignup ? 'Join AurisChess' : 'Sign in to AurisChess'}</h2>
+        <h2 id="auth-title">
+          {isSignup ? (
+            <>Join Auris<span>Chess</span></>
+          ) : (
+            <>Sign in to Auris<span>Chess</span></>
+          )}
+        </h2>
         <p>
           {isSignup
             ? 'Create a profile for games, analysis, and training history.'

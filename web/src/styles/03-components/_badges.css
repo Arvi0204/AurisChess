@@ -23,16 +23,6 @@
   color: var(--color-amber);
 }
 
-.notif-dot {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--color-amber);
-  box-shadow: 0 0 6px rgba(255, 185, 91, 0.5);
-}
 
 /* Play Card Indicators */
 .play-card__badge {

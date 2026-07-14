@@ -13,38 +13,16 @@
     flex-direction: column;
   }
 
-  /* Auth Overrides */
-  .auth-preview {
-    grid-template-columns: 1fr;
-  }
-
-  .mini-board {
-    width: 100%;
-    max-width: 132px;
-  }
-
-  .auth-card-mark {
-    display: block;
-    margin-bottom: 24px;
-  }
 
   /* Dashboard Overrides */
   .dashboard-greeting h1 {
     font-size: 1.4rem;
   }
 
-  .dashboard-header-avatar {
-    display: none;
-  }
-
   .quick-stats {
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Play Page Overrides */
-  .play-page-heading h2 {
-    font-size: 1.4rem;
-  }
 
   .play-mode-card__header {
     flex-direction: column;

@@ -1,9 +1,7 @@
 @media (max-width: 1040px) {
   /* Landing / Hero Layouts */
   .hero-section,
-  .auth-page,
-  .workflow-section,
-  .benefits-section {
+  .workflow-section {
     grid-template-columns: 1fr;
   }
 
@@ -14,36 +12,6 @@
   .hero-media {
     max-width: 760px;
     aspect-ratio: 1.35 / 1;
-  }
-
-  /* Auth Layouts */
-  .auth-page {
-    width: min(100%, 760px);
-    gap: 30px;
-    align-items: start;
-  }
-
-  .auth-story {
-    text-align: center;
-  }
-
-  .auth-story p:not(.status-pill) {
-    margin-right: auto;
-    margin-left: auto;
-  }
-
-  .auth-preview {
-    margin-right: auto;
-    margin-left: auto;
-    text-align: left;
-  }
-
-  .auth-benefits {
-    justify-content: center;
-  }
-
-  .auth-panel {
-    max-width: 520px;
   }
 
   /* Dashboard Shell & Sidebar */
@@ -121,10 +89,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Play Page Grid */
-  .play-mode-grid {
-    max-width: 720px;
-  }
 
   /* Active Game View Overrides */
   .play-shell.game-active,

@@ -1,29 +1,32 @@
-/* Common Button Styles & Modifiers */
-.login-button,
-.back-link {
+/* Sign-in / back navigation button */
+.login-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  min-height: 38px;
-  padding: 8px var(--spacing-md);
-  border: 1px solid var(--color-white-overlay-08);
+  min-height: 36px;
+  padding: 7px 20px;
+  border: none;
   border-radius: 8px;
-  color: var(--color-text);
-  background: var(--color-white-overlay-03);
-  font-size: 0.88rem;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
-  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease, transform 200ms ease;
+  color: var(--color-page-deep);
+  background: linear-gradient(135deg, #a8dfff 0%, #00b0f0 100%);
+  font-size: 0.875rem;
+  font-weight: 750;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 176, 240, 0.2);
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
 }
 
-.login-button:hover,
-.back-link:hover {
-  border-color: var(--color-cyan-glow-intense);
-  color: var(--color-cyan);
-  background-color: var(--color-cyan-overlay-hover);
+.login-button:hover {
+  background: linear-gradient(135deg, #c2e7ff 0%, #20c0ff 100%);
+  box-shadow: 0 6px 20px rgba(0, 176, 240, 0.35);
   transform: translateY(-1px);
 }
+
+.login-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
 
 .primary-button,
 .secondary-button {

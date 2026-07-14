@@ -7,10 +7,6 @@
 @import url('./01-reset/_reset.css');
 @import url('./01-reset/_typography.css');
 
-/* 02-Utilities Layer */
-@import url('./02-utilities/_layout.css');
-@import url('./02-utilities/_text.css');
-@import url('./02-utilities/_effects.css');
 
 /* 03-Components Layer */
 @import url('./03-components/_buttons.css');

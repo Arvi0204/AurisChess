@@ -39,6 +39,9 @@ const timeControls = [
   },
 ]
 
+/** Engine game sessions inactive for longer than this are discarded on restore. */
+const INACTIVITY_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
+
 const PlayPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const modeParam = searchParams.get('mode')
@@ -52,13 +55,7 @@ const PlayPage = () => {
 
   // ── Setup options ─────────────────────────────────────────────────────────
   const initialTab = modeParam === 'computer' || modeParam === 'online' ? modeParam : 'online'
-  const [activeSetupTab, setActiveSetupTab] = useState<'online' | 'computer'>(initialTab as any)
-
-  useEffect(() => {
-    if (modeParam === 'computer' || modeParam === 'online') {
-      setActiveSetupTab(modeParam)
-    }
-  }, [modeParam])
+  const [activeSetupTab, setActiveSetupTab] = useState<'online' | 'computer'>(initialTab)
 
   const handleTabChange = (tab: 'online' | 'computer') => {
     setActiveSetupTab(tab)
@@ -436,10 +433,10 @@ const PlayPage = () => {
       try {
         const data = JSON.parse(saved)
 
-        // Discard engine game if it is older than 10 minutes
-        const INACTIVITY_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
-        const updatedAt = data.updatedAt || 0
-        if (updatedAt && Date.now() - updatedAt > INACTIVITY_EXPIRY_MS) {
+        // Discard engine game if it is older than 10 minutes.
+        // Treat a missing updatedAt (saved before this field was introduced) as expired.
+        const updatedAt: number = data.updatedAt ?? 0
+        if (!updatedAt || Date.now() - updatedAt > INACTIVITY_EXPIRY_MS) {
           localStorage.removeItem('activeEngineGame')
           return
         }
@@ -1241,7 +1238,7 @@ const PlayPage = () => {
               )}
             </div>
 
-            <Link to="/dashboard" className="back-to-dashboard-btn" style={{ textDecoration: 'none' }}>
+            <Link to="/dashboard" className="back-to-dashboard-btn">
               <ArrowLeft size={14} aria-hidden="true" />
               Back to Dashboard
             </Link>

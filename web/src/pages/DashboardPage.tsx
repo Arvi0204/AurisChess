@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import PageHeader from '../components/dashboard/PageHeader'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import PlayCard from '../components/dashboard/PlayCard'
-import QuickStats from '../components/dashboard/QuickStats'
+import QuickStats, { type RatingHistoryPoint } from '../components/dashboard/QuickStats'
 import RecentGames from '../components/dashboard/RecentGames'
 import { useAuth } from '../context/AuthContext'
 
@@ -16,8 +16,8 @@ const DashboardPage = () => {
     streak: number | string
     ratingRapid: number | string
     ratingBlitz: number | string
-    rapidHistory: any[]
-    blitzHistory: any[]
+    rapidHistory: RatingHistoryPoint[]
+    blitzHistory: RatingHistoryPoint[]
   }>({
     totalGames: '—',
     streak: '—',
