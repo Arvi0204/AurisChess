@@ -960,6 +960,7 @@ const PlayPage = () => {
     handlePromotionChoice,
     handleCancelPromotion,
     playerColor,
+    username,
   })
 
   // Wire up narrateOpponentMoveRef once speakText/sanToSpeech are available

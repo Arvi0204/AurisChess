@@ -33,6 +33,7 @@ interface VoiceControlProps {
   handlePromotionChoice?: (pieceType: string) => void;
   handleCancelPromotion?: () => void;
   playerColor: 'white' | 'black';
+  username?: string;
 }
 
 export const useChessVoiceControl = ({
@@ -57,6 +58,7 @@ export const useChessVoiceControl = ({
   handlePromotionChoice,
   handleCancelPromotion,
   playerColor,
+  username = 'Player',
 }: VoiceControlProps) => {
   // Refs for the audio pipeline
   const mediaStreamRef    = useRef<MediaStream | null>(null);
@@ -73,13 +75,25 @@ export const useChessVoiceControl = ({
   // Did we detect real speech in the current recording window?
   const speechDetectedInCycleRef = useRef(false);
 
+  // Telemetry collection refs
+  const commandIndexRef          = useRef<number>(0);
+  const lastSpeechTimestampRef   = useRef<number>(0);
+  const recordingStoppedRef      = useRef<number>(0);
+  const apiResponseTimestampRef  = useRef<number>(0);
+  const gameSessionIdRef         = useRef<string>('');
+
+  useEffect(() => {
+    gameSessionIdRef.current = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+    commandIndexRef.current = 0;
+  }, [game]);
+
   // Ref mirror of all props to avoid stale closures
   const refs = useRef({
     game, makeMove, setBlindfoldMode, setShowResignConfirm,
     showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
     offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
     hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
-    blindfoldMode, playerColor,
+    blindfoldMode, playerColor, username
   });
   useEffect(() => {
     refs.current = {
@@ -87,9 +101,9 @@ export const useChessVoiceControl = ({
       showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult,
       offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect,
       hasPendingPromotion, handlePromotionChoice, handleCancelPromotion,
-      blindfoldMode, playerColor,
+      blindfoldMode, playerColor, username
     };
-  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect, hasPendingPromotion, handlePromotionChoice, handleCancelPromotion, blindfoldMode, playerColor]);
+  }, [game, makeMove, setBlindfoldMode, setShowResignConfirm, showResignConfirm, handleResign, isPlayerTurn, setVoiceStatus, volume, gameResult, offerDraw, drawOffer, respondDraw, promotionSetting, handlePromotionSelect, hasPendingPromotion, handlePromotionChoice, handleCancelPromotion, blindfoldMode, playerColor, username]);
 
   useEffect(() => { isActiveRef.current = isVoiceActive; }, [isVoiceActive]);
 
@@ -168,6 +182,41 @@ export const useChessVoiceControl = ({
     return map[char] ?? 'pawn';
   };
 
+  // ─── Send Telemetry to Backend (Silent) ──────────────────────────────────
+  const sendTelemetry = useCallback(async (rawText: string, resolvedMove: string, isSuccess: boolean) => {
+    try {
+      commandIndexRef.current += 1;
+      const executionCompleted = Date.now();
+      
+      const tSpeechEnd = lastSpeechTimestampRef.current || (recordingStoppedRef.current - SILENCE_THRESHOLD_MS);
+      const silenceBufferMs = Math.max(0, recordingStoppedRef.current - tSpeechEnd);
+      const networkWhisperMs = Math.max(0, apiResponseTimestampRef.current - recordingStoppedRef.current);
+      const executionMs = Math.max(0, executionCompleted - apiResponseTimestampRef.current);
+      const systemLatencyMs = networkWhisperMs + executionMs;
+      const userPerceivedLatencyMs = silenceBufferMs + systemLatencyMs;
+
+      const payload = {
+        gameSessionId: gameSessionIdRef.current,
+        username: refs.current.username,
+        commandIndex: commandIndexRef.current,
+        rawText,
+        resolvedMove,
+        isSuccess,
+        silenceBufferMs,
+        networkWhisperMs,
+        executionMs,
+        systemLatencyMs,
+        userPerceivedLatencyMs
+      };
+
+      fetch(`${API_BASE}/api/voice/telemetry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } catch (_) {}
+  }, []);
+
   // ─── Move processor (unchanged logic) ─────────────────────────────────────
   const processVoiceCommand = useCallback((rawText: string) => {
     if (!isActiveRef.current) return;
@@ -186,15 +235,18 @@ export const useChessVoiceControl = ({
         const promoChar = spokenPiece === 'knight' ? 'n' : spokenPiece[0];
         speakText(`Promoting to ${spokenPiece}.`);
         current.handlePromotionChoice(promoChar);
+        sendTelemetry(rawText, `Promoted to ${spokenPiece}`, true);
         return;
       }
       if (cleanText.match(/\b(cancel|no|stop|reject|back)\b/)) {
         speakText('Promotion cancelled.');
         current.handleCancelPromotion();
+        sendTelemetry(rawText, 'Promotion cancelled', true);
         return;
       }
       speakText('Please say Queen, Rook, Bishop, Knight, or Cancel.');
       current.setVoiceStatus('Waiting for piece: say Queen, Rook, Bishop, Knight, or Cancel');
+      sendTelemetry(rawText, 'Invalid promotion option', false);
       return;
     }
 
@@ -210,6 +262,7 @@ export const useChessVoiceControl = ({
       // No TTS, just update status quietly
       console.log(`[Voice] Ignored (no chess intent): "${rawText}" — ${msg}`);
       current.setVoiceStatus("Listening... Speak your move");
+      sendTelemetry(rawText, `Ignored: ${msg}`, false);
     };
 
     // Draw offer flow
@@ -217,11 +270,13 @@ export const useChessVoiceControl = ({
       if (cleanText.match(/\b(yes|accept|agree|confirm)\b/)) {
         speakText('Accepting draw offer.');
         current.respondDraw(true);
+        sendTelemetry(rawText, 'Draw accepted', true);
         return;
       }
       if (cleanText.match(/\b(no|decline|reject|cancel)\b/)) {
         speakText('Declining draw offer.');
         current.respondDraw(false);
+        sendTelemetry(rawText, 'Draw declined', true);
         return;
       }
     }
@@ -231,8 +286,10 @@ export const useChessVoiceControl = ({
       if (current.offerDraw) {
         speakText('Offering a draw.');
         current.offerDraw();
+        sendTelemetry(rawText, 'Draw offered', true);
       } else {
         speakText('Draw offers are only available in online mode.');
+        sendTelemetry(rawText, 'Draw offer failed (offline)', false);
       }
       return;
     }
@@ -240,20 +297,24 @@ export const useChessVoiceControl = ({
     // Resign flow
     if (current.showResignConfirm) {
       if (!hasChessIntent && !cleanText.match(/\b(yes|no|confirm|cancel|sure|dont)\b/)) {
-        return silentFail('resign confirm — no chess or confirm word');
+        silentFail('resign confirm — no chess or confirm word');
+        return;
       }
       if (cleanText.match(/\b(yes|confirm|sure|resign)\b/)) {
         speakText('Resigning the game.');
         current.handleResign();
+        sendTelemetry(rawText, 'Resigned', true);
         return;
       }
       if (cleanText.match(/\b(no|cancel|keep playing|dont)\b/)) {
         speakText('Resignation cancelled.');
         current.setShowResignConfirm(false);
         current.setVoiceStatus('Resignation cancelled. Speak your move.');
+        sendTelemetry(rawText, 'Resign cancelled', true);
         return;
       }
       speakText('Please confirm resignation. Say yes or no.');
+      sendTelemetry(rawText, 'Resign prompt', false);
       return;
     }
     if (cleanText.match(/\b(resign|give up|forfeit)\b/)) {
@@ -265,6 +326,7 @@ export const useChessVoiceControl = ({
       ttsBlockUntilRef.current = Date.now() + estimatedBlockMs;
       speakText(resignPrompt);
       current.setVoiceStatus("Confirm resignation by saying 'yes' or 'no'");
+      sendTelemetry(rawText, 'Resign triggered', true);
       return;
     }
 
@@ -276,6 +338,7 @@ export const useChessVoiceControl = ({
         current.setVoiceStatus(next ? 'Blindfold mode enabled' : 'Blindfold mode disabled');
         return next;
       });
+      sendTelemetry(rawText, 'Blindfold toggled', true);
       return;
     }
 
@@ -341,6 +404,7 @@ export const useChessVoiceControl = ({
 
           speakText(msg);
           current.setVoiceStatus(msg);
+          sendTelemetry(rawText, `Query capture: ${pieceWord}`, true);
           return;
         }
 
@@ -354,6 +418,7 @@ export const useChessVoiceControl = ({
 
         speakText(msg);
         current.setVoiceStatus(msg);
+        sendTelemetry(rawText, `Query location: ${pieceWord}`, true);
         return;
       }
 
@@ -369,6 +434,7 @@ export const useChessVoiceControl = ({
 
           speakText(msg);
           current.setVoiceStatus(msg);
+          sendTelemetry(rawText, 'Query last move (empty)', true);
           return;
         }
 
@@ -386,6 +452,7 @@ export const useChessVoiceControl = ({
 
         speakText(msg);
         current.setVoiceStatus(msg);
+        sendTelemetry(rawText, `Query last move (${lastMove.san})`, true);
         return;
       }
     }
@@ -394,12 +461,14 @@ export const useChessVoiceControl = ({
       // Don't spam TTS — just silently log
       console.log('[Voice] Ignored — not player turn');
       current.setVoiceStatus('Not your turn. Wait for the opponent.');
+      sendTelemetry(rawText, 'Not player turn', false);
       return;
     }
 
     // If no chess indicators at all, silently ignore
     if (!hasChessIntent) {
-      return silentFail('no chess coordinates or piece names found');
+      silentFail('no chess coordinates or piece names found');
+      return;
     }
 
     // Move matching
@@ -512,6 +581,7 @@ export const useChessVoiceControl = ({
           speakText(ambigMsg);
           current.setVoiceStatus('Ambiguous move. Try specifying the starting square.');
         }
+        sendTelemetry(rawText, 'Ambiguous Move', false);
       } else {
         console.log(`[Voice] Move: ${top.move.san}`);
         // If it is a promotion move, handle the promotion preference:
@@ -525,6 +595,9 @@ export const useChessVoiceControl = ({
             if (result) {
               speakText(sanToSpeech(top.move.san));
               current.setVoiceStatus(`Played: ${top.move.san}`);
+              sendTelemetry(rawText, top.move.san, true);
+            } else {
+              sendTelemetry(rawText, `Execution error: ${top.move.san}`, false);
             }
           } else {
             // No piece specified in voice command. Use setting preference.
@@ -533,12 +606,16 @@ export const useChessVoiceControl = ({
               current.handlePromotionSelect(top.move.from, top.move.to);
               speakText('Please select promotion piece on screen.');
               current.setVoiceStatus('Select promotion piece on screen.');
+              sendTelemetry(rawText, `Promotion selected overlay (${top.move.san})`, true);
             } else {
               // Auto-queen
               const result = current.makeMove({ from: top.move.from, to: top.move.to, promotion: 'q' });
               if (result) {
                 speakText(sanToSpeech(top.move.san));
                 current.setVoiceStatus(`Played: ${top.move.san}`);
+                sendTelemetry(rawText, top.move.san, true);
+              } else {
+                sendTelemetry(rawText, `Execution error: ${top.move.san}`, false);
               }
             }
           }
@@ -548,6 +625,9 @@ export const useChessVoiceControl = ({
           if (result) {
             speakText(sanToSpeech(top.move.san));
             current.setVoiceStatus(`Played: ${top.move.san}`);
+            sendTelemetry(rawText, top.move.san, true);
+          } else {
+            sendTelemetry(rawText, `Execution error: ${top.move.san}`, false);
           }
         }
       }
@@ -561,11 +641,12 @@ export const useChessVoiceControl = ({
       ttsBlockUntilRef.current = Date.now() + illegalMsg.split(' ').length * 400 + 1500;
       speakText(illegalMsg);
       current.setVoiceStatus(`No legal move matched: "${rawText}"`);
+      sendTelemetry(rawText, 'Illegal Move', false);
     } else {
       silentFail('scored candidates below threshold');
     }
 
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sendTelemetry]);
 
   // ─── Send audio blob to backend for Groq transcription ───────────────────
   const sendForTranscription = useCallback(async (blob: Blob) => {
@@ -596,6 +677,9 @@ export const useChessVoiceControl = ({
       if (!isActiveRef.current) return;
       const data = await res.json();
       if (!isActiveRef.current) return;
+
+      apiResponseTimestampRef.current = Date.now();
+
       if (data.success && data.transcript) {
         processVoiceCommand(data.transcript);
       } else {
@@ -603,19 +687,22 @@ export const useChessVoiceControl = ({
         if (isActiveRef.current) {
           refs.current.setVoiceStatus('Listening... Speak your move');
         }
+        sendTelemetry("", "Empty transcription", false);
       }
     } catch (err) {
       console.error('[Voice] Transcription fetch error:', err);
       if (isActiveRef.current) {
         refs.current.setVoiceStatus('Transcription error — check backend');
       }
+      apiResponseTimestampRef.current = Date.now();
+      sendTelemetry("", "API connection error", false);
     } finally {
       isSendingRef.current = false;
       if (isActiveRef.current) {
         refs.current.setVoiceStatus("Listening... Speak your move (e.g. 'e4', 'Knight f3')");
       }
     }
-  }, [processVoiceCommand]);
+  }, [processVoiceCommand, sendTelemetry]);
 
   // ─── Silence detector using AnalyserNode ─────────────────────────────────
   const startSilenceDetection = useCallback((stream: MediaStream) => {
@@ -641,6 +728,7 @@ export const useChessVoiceControl = ({
       if (isSpeaking) {
         speechDetected = true;
         speechDetectedInCycleRef.current = true; // mark that real speech occurred
+        lastSpeechTimestampRef.current = Date.now(); // update speech timestamp
         // Cancel any pending silence timer
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
@@ -660,6 +748,7 @@ export const useChessVoiceControl = ({
             if (elapsed < MIN_RECORDING_MS) return; // too short — ignore
 
             console.log(`[Voice] Silence detected after ${elapsed}ms — stopping recorder`);
+            recordingStoppedRef.current = Date.now();
             recorder.stop(); // triggers ondataavailable → onstop
           }, SILENCE_THRESHOLD_MS);
         }

@@ -35,8 +35,10 @@ const db = require('./config/db');
 // --- Routes ---
 const userRoutes = require('./routes/user');
 const voiceRoutes = require('./routes/voice');
+const telemetryRoutes = require('./routes/telemetry');
 app.use('/api/user', userRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use('/api/voice/telemetry', telemetryRoutes);
 
 // --- Protected route example ---
 const authenticate = require('./middleware/auth');
