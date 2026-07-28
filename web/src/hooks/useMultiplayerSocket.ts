@@ -64,8 +64,10 @@ export interface DrawOffer {
 }
 
 export interface OpponentDisconnected {
-  message: string;
+  username?: string;
+  message?: string;
   windowMs: number;
+  disconnectedAt?: number;
 }
 
 interface MovePayload {

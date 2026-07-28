@@ -10,7 +10,7 @@ import OnlineSetupCard from '../components/play/OnlineSetupCard'
 import MatchmakingOverlay from '../components/play/MatchmakingOverlay'
 import { Chess } from 'chess.js'
 import { useChessVoiceControl } from '../hooks/useChessVoiceControl'
-import { useMultiplayerSocket } from '../hooks/useMultiplayerSocket'
+import { useMultiplayerSocket, type OpponentDisconnected } from '../hooks/useMultiplayerSocket'
 import { getKingSquareInCheck, playChessSound } from '../utils/chessHelpers'
 import { API_BASE } from '../config/api'
 import { useAuth } from '../context/AuthContext'
@@ -41,6 +41,55 @@ const timeControls = [
 
 /** Engine game sessions inactive for longer than this are discarded on restore. */
 const INACTIVITY_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
+
+const OpponentDisconnectBanner: React.FC<{ data: OpponentDisconnected }> = ({ data }) => {
+  const windowSeconds = Math.ceil((data.windowMs || 30000) / 1000);
+  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+    if (data.disconnectedAt) {
+      const elapsed = Math.floor((Date.now() - data.disconnectedAt) / 1000);
+      return Math.max(0, windowSeconds - elapsed);
+    }
+    return windowSeconds;
+  });
+
+  useEffect(() => {
+    const startTime = data.disconnectedAt || Date.now();
+    const calculateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      return Math.max(0, windowSeconds - elapsed);
+    };
+
+    setSecondsLeft(calculateRemaining());
+
+    const interval = setInterval(() => {
+      const remaining = calculateRemaining();
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [data.disconnectedAt, data.windowMs, windowSeconds]);
+
+  const name = data.username || 'Opponent';
+
+  return (
+    <div style={{
+      position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)',
+      background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)',
+      borderRadius: '10px', padding: '10px 20px', color: '#fca5a5',
+      fontSize: '0.85rem', zIndex: 200, backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', gap: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+    }}>
+      <span style={{ animation: 'pulse 1.5s infinite' }}>⚠️</span>
+      <span>
+        <strong>{name}</strong> disconnected. Waiting <strong>{secondsLeft}</strong> {secondsLeft === 1 ? 'second' : 'seconds'}…
+      </span>
+    </div>
+  );
+};
 
 const PlayPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -1035,14 +1084,7 @@ const PlayPage = () => {
           <div className="game-main">
             {/* Opponent disconnected banner */}
             {mp.opponentDisconnected && (
-              <div style={{
-                position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)',
-                background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)',
-                borderRadius: '10px', padding: '10px 20px', color: '#fca5a5',
-                fontSize: '0.85rem', zIndex: 200, backdropFilter: 'blur(12px)',
-              }}>
-                {mp.opponentDisconnected.message}
-              </div>
+              <OpponentDisconnectBanner data={mp.opponentDisconnected} />
             )}
 
             {/* Inactivity warning banner */}

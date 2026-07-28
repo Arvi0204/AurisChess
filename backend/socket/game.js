@@ -441,8 +441,10 @@ function handleDisconnect(io, socket) {
     // Notify the opponent
     const opponentSocketId = isWhite ? room.black.socketId : room.white.socketId;
     io.to(opponentSocketId).emit('game:opponent-disconnected', {
-      message:    `${disconnectedName} disconnected. Waiting 30 seconds…`,
-      windowMs:   RECONNECT_WINDOW_MS,
+      username:       disconnectedName,
+      message:        `${disconnectedName} disconnected.`,
+      windowMs:       RECONNECT_WINDOW_MS,
+      disconnectedAt: Date.now(),
     });
 
     // Start reconnect countdown

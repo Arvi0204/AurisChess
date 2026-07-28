@@ -25,6 +25,23 @@ const PHASE_WINDOWS = [
 ];
 
 /**
+ * Determine if two queue entries represent the same user.
+ */
+function isSameUser(entryA, entryB) {
+  if (!entryA || !entryB) return false;
+  if (entryA.socketId && entryB.socketId && entryA.socketId === entryB.socketId) return true;
+  if (entryA.userId && entryB.userId && entryA.userId === entryB.userId) return true;
+  if (
+    entryA.username &&
+    entryB.username &&
+    entryA.username.trim().toLowerCase() === entryB.username.trim().toLowerCase()
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Determine the current rating window for an entry based on how long it has
  * been in the queue.
  */
@@ -47,7 +64,7 @@ function findOpponent(candidate, entries) {
   let bestDiff = Infinity;
 
   for (const entry of entries) {
-    if (entry.socketId === candidate.socketId) continue;
+    if (isSameUser(candidate, entry)) continue;
 
     const diff = Math.abs(entry.rating - candidate.rating);
     const opponentWindow = getRatingWindow(entry);
@@ -76,7 +93,7 @@ function scanBucket(io, timeControl) {
     if (matched.has(candidate.socketId)) continue;
 
     const remaining = entries.filter(
-      (e) => !matched.has(e.socketId) && e.socketId !== candidate.socketId
+      (e) => !matched.has(e.socketId) && !isSameUser(e, candidate)
     );
     const opponent = findOpponent(candidate, remaining);
 
@@ -123,11 +140,31 @@ function scanBucket(io, timeControl) {
 }
 
 /**
+ * Helper to remove an entry matching a socket, userId, or username from all queues.
+ */
+function removeUserFromQueue(socket, userId, username) {
+  if (socket._matchmakingTimers) {
+    socket._matchmakingTimers.forEach(clearTimeout);
+    socket._matchmakingTimers = null;
+  }
+
+  const target = { socketId: socket.id, userId, username };
+
+  for (const [tc, entries] of queue.entries()) {
+    const filtered = entries.filter((e) => !isSameUser(e, target));
+    if (filtered.length !== entries.length) {
+      queue.set(tc, filtered);
+      console.log(`[Matchmaking] Removed previous queue entries for ${username || userId || socket.id} (tc=${tc})`);
+    }
+  }
+}
+
+/**
  * Handle a player joining the matchmaking queue.
  */
 function handleJoin(io, socket, { rating, timeControl, userId, username, email }) {
-  // Remove any existing entry for this socket (safety guard)
-  handleCancel(socket);
+  // Remove any existing entry for this socket or user (safety guard)
+  removeUserFromQueue(socket, userId, username);
 
   const entry = {
     socketId: socket.id,
@@ -175,20 +212,7 @@ function handleJoin(io, socket, { rating, timeControl, userId, username, email }
  * Remove a player from the matchmaking queue (cancel search).
  */
 function handleCancel(socket) {
-  // Clear expansion timers
-  if (socket._matchmakingTimers) {
-    socket._matchmakingTimers.forEach(clearTimeout);
-    socket._matchmakingTimers = null;
-  }
-
-  // Remove from every time-control bucket
-  for (const [tc, entries] of queue.entries()) {
-    const filtered = entries.filter((e) => e.socketId !== socket.id);
-    if (filtered.length !== entries.length) {
-      queue.set(tc, filtered);
-      console.log(`[Matchmaking] ${socket.id} removed from queue (tc=${tc})`);
-    }
-  }
+  removeUserFromQueue(socket, null, null);
 }
 
 function isInQueue(socketId, timeControl) {
