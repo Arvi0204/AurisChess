@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import AuthPage from './pages/AuthPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
 import LearnPage from './pages/LearnPage'
@@ -89,6 +90,10 @@ const AppContent = () => {
               <AuthPage />
             </PublicRoute>
           }
+        />
+        <Route
+          path="/reset-password"
+          element={<ResetPasswordPage />}
         />
         <Route
           path="/dashboard"
