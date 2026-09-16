@@ -1,0 +1,49 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs every 3 days at 00:00 UTC (well within Supabase's 7-day inactivity pause window)
+    - cron: '0 0 */3 * *'
+  # Allows manual execution via the GitHub Actions UI at any time
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "❌ Error: Missing repository secrets SUPABASE_URL or SUPABASE_ANON_KEY."
+            echo "👉 Go to GitHub Repo -> Settings -> Secrets and variables -> Actions to add them."
+            exit 1
+          fi
+
+          # Strip trailing slash if present
+          CLEAN_URL="${SUPABASE_URL%/}"
+
+          echo "Pinging Supabase Auth Service..."
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            "$CLEAN_URL/auth/v1/settings")
+          echo "Auth settings status: $AUTH_STATUS"
+
+          echo "Pinging Supabase Storage Service..."
+          STORAGE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$CLEAN_URL/storage/v1/status")
+          echo "Storage service status: $STORAGE_STATUS"
+
+          # If project is healthy, endpoints return HTTP 200
+          if [ "$AUTH_STATUS" -eq 200 ] || [ "$STORAGE_STATUS" -eq 200 ]; then
+            echo "✅ Success: Supabase received activity ping and remains active."
+          elif [ "$AUTH_STATUS" -eq 502 ] || [ "$STORAGE_STATUS" -eq 502 ]; then
+            echo "⚠️ HTTP 502 Bad Gateway: Project appears to be PAUSED currently."
+            echo "👉 Please log into https://supabase.com/dashboard and click 'Restore / Unpause' first!"
+            exit 1
+          else
+            echo "⚠️ Received statuses - Auth: $AUTH_STATUS, Storage: $STORAGE_STATUS"
+            exit 1
+          fi
